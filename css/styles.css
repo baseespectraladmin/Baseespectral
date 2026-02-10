@@ -1,0 +1,275 @@
+/* =========================================
+   VARIABLES Y CONFIGURACIÓN GLOBAL
+   ========================================= */
+:root {
+    --azul-oscuro: #081f2d;
+    --azul-medio: #0f4c75;
+    --azul-claro: #3282b8;
+    --verde-acento: #2ecc71;
+    --fondo: #f4f7fb;
+    --blanco: #ffffff;
+    --texto: #2c3e50;
+    --gris: #7f8c8d;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+body {
+    background-color: var(--fondo);
+    color: var(--texto);
+    line-height: 1.6;
+}
+
+/* =========================================
+   NAVBAR (Barra de Navegación)
+   ========================================= */
+header {
+    background: linear-gradient(90deg, var(--azul-oscuro), var(--azul-medio));
+    padding: 0 40px;
+}
+
+.navbar {
+    display: flex;
+    align-items: center;
+    height: 70px;
+}
+
+.logo {
+    color: var(--blanco);
+    font-size: 20px;
+    font-weight: 600;
+    margin-right: 40px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+}
+
+nav ul li {
+    position: relative; /* Indispensable para que el menú no flote a la izquierda */
+}
+
+nav ul li a {
+    display: block;
+    padding: 25px 18px;
+    color: var(--blanco);
+    text-decoration: none;
+    font-size: 14.5px;
+    transition: background 0.25s;
+    cursor: pointer;
+}
+
+nav ul li a:hover {
+    background-color: rgba(255,255,255,0.12);
+}
+
+/* =========================================
+   DROPDOWN (Menú Desplegable con Retardo)
+   ========================================= */
+.dropdown {
+    position: absolute;
+    top: 70px; /* Alineado al alto de la navbar */
+    left: 0;
+    background-color: var(--blanco);
+    min-width: 260px;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    z-index: 1000;
+
+    /* Configuración para el efecto de suavizado y tiempo de espera */
+    display: block; 
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+    
+    /* El truco de los 0.2s para que no se cierre rápido al bajar el cursor */
+    transition-delay: 0.2s; 
+}
+
+/* Mostrar el menú al pasar el cursor */
+nav ul li:hover .dropdown {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    transition-delay: 0s; /* Que aparezca instantáneo al entrar */
+}
+
+.dropdown a {
+    color: var(--texto);
+    padding: 14px 18px;
+    font-size: 14px;
+    display: block;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.dropdown a:hover {
+    background-color: var(--fondo);
+    color: var(--azul-medio);
+}
+
+/* =========================================
+   HERO (Mensaje Principal)
+   ========================================= */
+.hero {
+    background: linear-gradient(135deg, #0f4c75, #3282b8);
+    color: var(--blanco);
+    padding: 70px 60px;
+}
+
+.hero h1 {
+    font-size: 36px;
+    font-weight: 600;
+    max-width: 1000px;
+}
+
+.hero p {
+    margin-top: 20px;
+    max-width: 1000px;
+    font-size: 16.5px;
+    line-height: 1.8;
+    color: #ecf6ff;
+}
+
+/* =========================================
+   CONTENEDORES Y GRID
+   ========================================= */
+.container {
+    padding: 40px 60px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 28px;
+}
+
+.card {
+    background-color: var(--blanco);
+    padding: 28px;
+    border-radius: 18px;
+    box-shadow: 0 10px 22px rgba(0,0,0,0.06);
+    border-top: 5px solid var(--azul-claro);
+    transition: transform 0.25s, box-shadow 0.25s;
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 16px 32px rgba(0,0,0,0.08);
+}
+
+.card h3 {
+    font-size: 19px;
+    margin-bottom: 14px;
+    color: var(--azul-medio);
+}
+
+.card p {
+    font-size: 14.5px;
+    color: var(--gris);
+}
+
+/* =========================================
+   ESTILOS DE SECCIONES Y FORMULARIO
+   ========================================= */
+.seccion-contenido {
+    display: none; /* Controlado por JS */
+}
+
+.seccion-activa {
+    display: block;
+}
+
+.form-subida {
+    max-width: 700px;
+    margin: 0 auto;
+    background: white;
+    padding: 35px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.form-subida h2 {
+    color: var(--azul-oscuro);
+    margin-bottom: 25px;
+}
+
+.form-subida label {
+    display: block;
+    margin-top: 15px;
+    font-weight: 600;
+    color: var(--azul-medio);
+}
+
+.form-subida input, .form-subida select, .form-subida textarea {
+    width: 100%;
+    padding: 12px;
+    margin-top: 8px;
+    border: 1px solid #dfe6e9;
+    border-radius: 10px;
+    background-color: #fcfdfe;
+}
+
+.btn-subir {
+    background: var(--verde-acento);
+    color: white;
+    border: none;
+    padding: 15px;
+    width: 100%;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 16px;
+    margin-top: 25px;
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+
+.btn-subir:hover {
+    filter: brightness(1.1);
+}
+
+/* =========================================
+   LISTADO DE ARTÍCULOS
+   ========================================= */
+.articulo-item {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    border-left: 6px solid var(--azul-claro);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+}
+
+.articulo-item h3 {
+    color: var(--azul-oscuro);
+    margin-bottom: 5px;
+}
+
+.articulo-item p {
+    font-size: 14px;
+    color: var(--gris);
+}
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+@media (max-width: 900px) {
+    header { padding: 0 20px; }
+    .navbar { flex-wrap: wrap; height: auto; padding: 10px 0; }
+    nav ul { flex-wrap: wrap; margin-top: 10px; }
+    .hero { padding: 50px 30px; }
+    .container { padding: 40px 30px; }
+}

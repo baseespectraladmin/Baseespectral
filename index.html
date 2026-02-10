@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Base de Datos Espectral</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+    <div class="navbar">
+        <div class="logo" onclick="mostrarSeccion('home')">Base de Datos Espectral</div>
+        <nav>
+            <ul>
+                <li><a onclick="mostrarSeccion('home')">Home</a></li>
+
+                <li>
+                    <a>Espectros</a>
+                    <div class="dropdown">
+                        <a onclick="mostrarSeccion('espectros-absorbancia')">Espectros de absorbancia</a>
+                        <a onclick="mostrarSeccion('espectros-reflexion')">Espectros de reflexión difusa</a>
+                    </div>
+                </li>
+
+                <li>
+                    <a>Artículos</a>
+                    <div class="dropdown">
+                        <a onclick="mostrarSeccion('art-difusion')">Artículos de difusión</a>
+                        <a onclick="mostrarSeccion('art-investigacion')">Artículos de investigación</a>
+                        <a onclick="mostrarSeccion('art-referencias')">Artículos de referencias</a>
+                    </div>
+                </li>
+
+                <li>
+                    <a>Reflexión Difusa</a>
+                    <div class="dropdown">
+                        <a onclick="mostrarSeccion('ref-agricola')">Reflexión difusa agrícola</a>
+                        <a onclick="mostrarSeccion('ref-aplicada')">Reflexión difusa aplicada</a>
+                        <a onclick="mostrarSeccion('ref-simulada')">Reflexión difusa simulada</a>
+                    </div>
+                </li>
+
+                <li>
+                    <a>Fluorescencia</a>
+                    <div class="dropdown">
+                        <a onclick="mostrarSeccion('fluo-medica')">Fluorescencia médica</a>
+                        <a onclick="mostrarSeccion('fluo-med-aplicada')">Fluorescencia médica aplicada</a>
+                        <a onclick="mostrarSeccion('fluo-med-simulada')">Fluorescencia médica simulada</a>
+                        <a onclick="mostrarSeccion('fluo-agricola')">Fluorescencia agrícola</a>
+                        <a onclick="mostrarSeccion('fluo-agri-aplicada')">Fluorescencia agrícola aplicada</a>
+                        <a onclick="mostrarSeccion('fluo-agri-simulada')">Fluorescencia agrícola simulada</a>
+                    </div>
+                </li>
+                <li><a onclick="mostrarSeccion('seccion-subir')" style="color: var(--verde-acento);">+ Subir</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<div id="home" class="seccion-contenido seccion-activa">
+    <section class="hero">
+        <h1>Firmas ópticas trazables para monitoreo agrícola y periurbano.</h1>
+        <p>Biblioteca de firmas ópticas (UV–Vis–NIR) para el proyecto EspectroEdu.</p>
+    </section>
+    <main class="container">
+        <section class="grid">
+            <div class="card" onclick="mostrarSeccion('espectros-absorbancia')">
+                <h3>Espectros de Absorbancia</h3>
+                <p>Firmas espectrales para análisis químicos y biomédicos.</p>
+            </div>
+            <div class="card" onclick="mostrarSeccion('art-investigacion')">
+                <h3>Artículos Científicos</h3>
+                <p>Repositorio de investigación científica vinculada.</p>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div id="seccion-subir" class="seccion-contenido container">
+    <div class="form-subida">
+        <h2>Subir Nuevo Artículo</h2>
+        <form id="formArticulo">
+            <label>Título:</label>
+            <input type="text" id="titulo" required placeholder="Título del trabajo">
+            
+            <label>Autores:</label>
+            <input type="text" id="autores" required placeholder="Ej: Isai G., Dr. Enrique González">
+            
+            <label>Año y Categoría:</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="number" id="anio" required placeholder="2026" style="flex:1">
+                <select id="categoria" required style="flex:2">
+                    <optgroup label="Artículos">
+                        <option value="art-investigacion">Artículos de Investigación</option>
+                        <option value="art-difusion">Artículos de Difusión</option>
+                        <option value="art-referencias">Artículos de Referencias</option>
+                    </optgroup>
+                    <optgroup label="Reflexión Difusa">
+                        <option value="ref-agricola">Reflexión Agrícola</option>
+                        <option value="ref-aplicada">Reflexión Aplicada</option>
+                        <option value="ref-simulada">Reflexión Simulada</option>
+                    </optgroup>
+                    <optgroup label="Fluorescencia">
+                        <option value="fluo-medica">Fluorescencia Médica</option>
+                        <option value="fluo-med-aplicada">Fluorescencia Médica Aplicada</option>
+                        <option value="fluo-med-simulada">Fluorescencia Médica Simulada</option>
+                        <option value="fluo-agricola">Fluorescencia Agrícola</option>
+                        <option value="fluo-agri-aplicada">Fluorescencia Agrícola Aplicada</option>
+                        <option value="fluo-agri-simulada">Fluorescencia Agrícola Simulada</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <label>Archivo (PDF):</label>
+            <input type="file" id="archivo" accept=".pdf" required>
+            <button type="submit" class="btn-subir">Guardar en Base de Datos</button>
+        </form>
+    </div>
+</div>
+
+<div id="art-investigacion" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Artículos de Investigación</h1><hr><div id="lista-art-investigacion" class="lista-container"></div>
+</div>
+<div id="art-difusion" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Artículos de Difusión</h1><hr><div id="lista-art-difusion" class="lista-container"></div>
+</div>
+<div id="art-referencias" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Artículos de Referencias</h1><hr><div id="lista-art-referencias" class="lista-container"></div>
+</div>
+
+<div id="espectros-absorbancia" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Espectros de Absorbancia</h1><hr><div id="lista-espectros-absorbancia" class="lista-container"></div>
+</div>
+<div id="espectros-reflexion" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Espectros de Reflexión Difusa</h1><hr><div id="lista-espectros-reflexion" class="lista-container"></div>
+</div>
+
+<div id="ref-agricola" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Reflexión Difusa Agrícola</h1><hr><div id="lista-ref-agricola" class="lista-container"></div>
+</div>
+<div id="ref-aplicada" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Reflexión Difusa Aplicada</h1><hr><div id="lista-ref-aplicada" class="lista-container"></div>
+</div>
+<div id="ref-simulada" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Reflexión Difusa Simulada</h1><hr><div id="lista-ref-simulada" class="lista-container"></div>
+</div>
+
+<div id="fluo-medica" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Fluorescencia Médica</h1><hr><div id="lista-fluo-medica" class="lista-container"></div>
+</div>
+<div id="fluo-med-aplicada" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Fluorescencia Médica Aplicada</h1><hr><div id="lista-fluo-med-aplicada" class="lista-container"></div>
+</div>
+<div id="fluo-med-simulada" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Fluorescencia Médica Simulada</h1><hr><div id="lista-fluo-med-simulada" class="lista-container"></div>
+</div>
+<div id="fluo-agricola" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Fluorescencia Agrícola</h1><hr><div id="lista-fluo-agricola" class="lista-container"></div>
+</div>
+<div id="fluo-agri-aplicada" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Fluorescencia Agrícola Aplicada</h1><hr><div id="lista-fluo-agri-aplicada" class="lista-container"></div>
+</div>
+<div id="fluo-agri-simulada" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Fluorescencia Agrícola Simulada</h1><hr><div id="lista-fluo-agri-simulada" class="lista-container"></div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
