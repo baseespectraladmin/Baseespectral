@@ -1,13 +1,9 @@
-// ==========================================
 // 1. CONFIGURACIÓN DE CONEXIÓN A SUPABASE
-// ==========================================
 const SUPABASE_URL = "https://nxktvjduooqfgzzrdfot.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54a3R2amR1b29xZmd6enJkZm90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMTg1ODgsImV4cCI6MjA4NjY5NDU4OH0.4hYin09mna34MYg3cGdjtzIyvmZOntE5Xceofa9yTAs";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ==========================================
 // 2. MANEJO DE NAVEGACIÓN Y CARGA DE DATOS
-// ==========================================
 let graficaCargada = false;
 
 function mostrarSeccion(id) {
@@ -37,11 +33,12 @@ async function cargarArticulosDesdeNube(categoria) {
     contenedor.innerHTML = '<p style="color: var(--gris); padding: 20px;">Consultando Base de Datos Espectral...</p>';
 
     try {
-        // CAMBIO: Se usa 'articulos' en lugar de 'base_espectral'
+        // Consultamos la tabla 'articulos' ordenando por 'anio' (2026 -> 2025...)
         const { data, error } = await _supabase
             .from('articulos') 
             .select('*')
-            .eq('categoria', categoria);
+            .eq('categoria', categoria)
+            .order('anio', { ascending: false }); 
 
         if (error) throw error;
 
@@ -69,57 +66,39 @@ async function cargarArticulosDesdeNube(categoria) {
     }
 }
 
-// ==========================================
 // 3. LÓGICA DEL FORMULARIO DE SUBIDA (ADMIN)
-// ==========================================
 const formArticulo = document.getElementById('formArticulo');
 if (formArticulo) {
     formArticulo.addEventListener('submit', async function(e) {
         e.preventDefault();
-        
         const archivoPDF = document.getElementById('archivo').files[0];
         if (!archivoPDF) return alert("Por favor selecciona un archivo PDF");
 
         const nombreArchivo = `${Date.now()}_${archivoPDF.name}`;
 
         try {
-            const { data: uploadData, error: uploadError } = await _supabase.storage
-                .from('pdfs')
-                .upload(nombreArchivo, archivoPDF);
-
+            const { error: uploadError } = await _supabase.storage.from('pdfs').upload(nombreArchivo, archivoPDF);
             if (uploadError) throw uploadError;
 
-            const { data: { publicUrl } } = _supabase.storage
-                .from('pdfs')
-                .getPublicUrl(nombreArchivo);
+            const { data: { publicUrl } } = _supabase.storage.from('pdfs').getPublicUrl(nombreArchivo);
 
-            // CAMBIO: Se usa 'articulos' para guardar los datos
-            const { error: dbError } = await _supabase
-                .from('articulos')
-                .insert([{
-                    titulo: document.getElementById('titulo').value,
-                    autores: document.getElementById('autores').value,
-                    anio: parseInt(document.getElementById('anio').value),
-                    categoria: document.getElementById('categoria').value,
-                    pdf_url: publicUrl
-                }]);
+            const { error: dbError } = await _supabase.from('articulos').insert([{
+                titulo: document.getElementById('titulo').value,
+                autores: document.getElementById('autores').value,
+                anio: parseInt(document.getElementById('anio').value),
+                categoria: document.getElementById('categoria').value,
+                pdf_url: publicUrl
+            }]);
 
             if (dbError) throw dbError;
-
             alert("¡Éxito! El artículo se ha guardado permanentemente en la nube.");
             this.reset();
             mostrarSeccion('home');
-            
-        } catch (err) {
-            console.error("Error de subida:", err);
-            alert("Error: " + err.message);
-        }
+        } catch (err) { alert("Error: " + err.message); }
     });
 }
 
-// ==========================================
 // 4. SISTEMA DE ACCESO ADMINISTRATIVO
-// ==========================================
 const CREDENCIALES_ADMIN = { usuario: "isai_admin", pass: "UPT2026" };
 
 function verificarAdmin() {
@@ -132,27 +111,25 @@ function verificarAdmin() {
         mostrarSeccion('home');
     } else {
         const errLog = document.getElementById('error-login');
-        errLog.style.display = 'block';
-        errLog.innerText = "Credenciales incorrectas para la Base Espectral.";
+        if (errLog) {
+            errLog.style.display = 'block';
+            errLog.innerText = "Credenciales incorrectas para la Base Espectral.";
+        }
     }
 }
 
-// ==========================================
 // 5. LÓGICA DEL GRAFICADOR PROFESIONAL
-// ==========================================
 async function inicializarGrafica() {
     const gd = document.getElementById('grafica-reflexion');
     const tooltip = document.getElementById('custom-tooltip');
     const lambdaSpan = document.getElementById('lambda-value');
     const reflSpan = document.getElementById('refl-value');
-    
     if (!gd) return;
 
     try {
         const resp = await fetch('css/data/reflexion.csv');
         const texto = await resp.text();
         const filas = texto.trim().split('\n').filter(l => l.trim() !== '');
-        
         const wavelength = [], reflectancia = [];
         filas.slice(1).forEach(l => {
             const cols = l.split(/,|\t|;/).map(s => s.trim());
@@ -164,35 +141,13 @@ async function inicializarGrafica() {
             }
         });
 
-        const trace = {
-            x: wavelength,
-            y: reflectancia,
-            mode: 'lines',
-            line: { color: '#3282b8', width: 2.5, shape: 'spline' },
-            hoverinfo: 'none'
-        };
-
-        const hoverTrace = {
-            x: [0], y: [0],
-            mode: 'markers',
-            marker: { size: 12, color: '#006847', line: { width: 3, color: '#ffffff' } },
-            hoverinfo: 'none'
-        };
-
+        const trace = { x: wavelength, y: reflectancia, mode: 'lines', line: { color: '#3282b8', width: 2.5, shape: 'spline' }, hoverinfo: 'none' };
+        const hoverTrace = { x: [0], y: [0], mode: 'markers', marker: { size: 12, color: '#006847', line: { width: 3, color: '#ffffff' } }, hoverinfo: 'none' };
         const layout = {
-            title: {
-                text: '<b>Espectro de Reflexión Difusa - UPT</b>',
-                font: { family: 'Segoe UI', size: 20, color: '#081f2d' }
-            },
+            title: { text: '<b>Espectro de Reflexión Difusa - UPT</b>', font: { family: 'Segoe UI', size: 20, color: '#081f2d' } },
             xaxis: { title: 'Longitud de onda (nm)', gridcolor: '#e2e8f0', zeroline: false, range: [400, 800] },
             yaxis: { title: 'Reflexión (%)', gridcolor: '#e2e8f0', zeroline: false, range: [0, 100] },
-            paper_bgcolor: '#fcfdfe',
-            plot_bgcolor: '#ffffff',
-            hovermode: false,
-            showlegend: false,
-            margin: { l: 60, r: 30, t: 80, b: 60 },
-            bordercolor: '#dfe6e9',
-            borderwidth: 1
+            paper_bgcolor: '#fcfdfe', plot_bgcolor: '#ffffff', hovermode: false, showlegend: false, margin: { l: 60, r: 30, t: 80, b: 60 }
         };
 
         await Plotly.newPlot(gd, [trace, hoverTrace], layout, { responsive: true, displayModeBar: false });
@@ -201,48 +156,29 @@ async function inicializarGrafica() {
         function interpY(x) {
             if (x <= wavelength[0]) return reflectancia[0];
             if (x >= wavelength[wavelength.length - 1]) return reflectancia[reflectancia.length - 1];
-            let i = 1;
-            while (i < wavelength.length && x > wavelength[i]) i++;
-            const x1 = wavelength[i - 1], x2 = wavelength[i];
-            const y1 = reflectancia[i - 1], y2 = reflectancia[i];
-            const t = (x - x1) / (x2 - x1);
-            return y1 + t * (y2 - y1);
-        }
-
-        function pixelToData(clientX, clientY) {
-            const rect = gd.getBoundingClientRect();
-            const fullLayout = gd._fullLayout;
-            const l = fullLayout.margin.l;
-            const t = fullLayout.margin.t;
-            const plotWidth = rect.width - (l + fullLayout.margin.r);
-            const plotHeight = rect.height - (t + fullLayout.margin.b);
-            const relX = (clientX - rect.left - l) / plotWidth;
-            const xRange = fullLayout.xaxis.range;
-            const dataX = xRange[0] + relX * (xRange[1] - xRange[0]);
-            return { dataX, xRange, yRange: fullLayout.yaxis.range, plotWidth, plotHeight, l, t };
+            let i = 1; while (i < wavelength.length && x > wavelength[i]) i++;
+            const x1 = wavelength[i - 1], x2 = wavelength[i], y1 = reflectancia[i - 1], y2 = reflectancia[i];
+            return y1 + ((x - x1) / (x2 - x1)) * (y2 - y1);
         }
 
         gd.addEventListener('mousemove', (ev) => {
-            const { dataX, xRange, yRange, plotWidth, plotHeight, l, t } = pixelToData(ev.clientX, ev.clientY);
-            if (dataX >= xRange[0] && dataX <= xRange[1]) {
+            const rect = gd.getBoundingClientRect();
+            const fullLayout = gd._fullLayout;
+            const l = fullLayout.margin.l, t = fullLayout.margin.t;
+            const plotW = rect.width - (l + fullLayout.margin.r), plotH = rect.height - (t + fullLayout.margin.b);
+            const dataX = 400 + ((ev.clientX - rect.left - l) / plotW) * 400;
+
+            if (dataX >= 400 && dataX <= 800) {
                 const yInterp = interpY(dataX);
                 Plotly.restyle(gd, { x: [[dataX]], y: [[yInterp]] }, [1]);
-                lambdaSpan.textContent = dataX.toFixed(2);
-                reflSpan.textContent = yInterp.toFixed(2);
-                const pxX = l + ((dataX - xRange[0]) / (xRange[1] - xRange[0])) * plotWidth;
-                const pxY = t + (1 - ((yInterp - yRange[0]) / (yRange[1] - yRange[0]))) * plotHeight;
-                tooltip.style.left = pxX + 'px';
-                tooltip.style.top = (pxY - 25) + 'px';
-                tooltip.style.display = 'block';
-            } else {
-                tooltip.style.display = 'none';
-                Plotly.restyle(gd, { x: [[]], y: [[]] }, [1]);
+                if(lambdaSpan) lambdaSpan.textContent = dataX.toFixed(2);
+                if(reflSpan) reflSpan.textContent = yInterp.toFixed(2);
+                if(tooltip) {
+                    tooltip.style.left = (l + ((dataX - 400) / 400) * plotW) + 'px';
+                    tooltip.style.top = (t + (1 - (yInterp / 100)) * plotH - 25) + 'px';
+                    tooltip.style.display = 'block';
+                }
             }
         });
-
-        gd.addEventListener('mouseleave', () => {
-            tooltip.style.display = 'none';
-            Plotly.restyle(gd, { x: [[]], y: [[]] }, [1]);
-        });
-    } catch (e) { console.error("Error al cargar datos espectrales:", e); }
+    } catch (e) { console.error("Error datos espectrales:", e); }
 }
