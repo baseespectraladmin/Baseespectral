@@ -26,34 +26,30 @@ body {
 }
 
 /* =========================================
-   2. NAVBAR Y HEADER
+   2. NAVBAR (Restaurado a posición original)
    ========================================= */
 header {
     background: linear-gradient(90deg, var(--azul-oscuro), var(--azul-medio));
     padding: 0 40px;
-    position: relative; /* Para el despliegue del menú móvil */
 }
 
 .navbar {
     display: flex;
     align-items: center;
-    justify-content: space-between; /* Logo a la izquierda, Menú a la derecha */
-    height: 70px;
+    height: 70px; /* Mantenemos la altura original */
 }
 
 .logo {
     color: var(--blanco);
     font-size: 20px;
     font-weight: 600;
-    cursor: pointer;
+    margin-right: 40px; /* Espacio original entre logo y menú */
     white-space: nowrap;
+    cursor: pointer;
 }
 
 .menu-icon {
-    display: none; /* Oculto en PC y Tablets */
-    font-size: 28px;
-    color: white;
-    cursor: pointer;
+    display: none; /* Solo para celulares */
 }
 
 nav ul {
@@ -73,10 +69,12 @@ nav ul li a {
     cursor: pointer;
 }
 
-nav ul li a:hover { background-color: rgba(255,255,255,0.12); }
+nav ul li a:hover {
+    background-color: rgba(255,255,255,0.12);
+}
 
 /* =========================================
-   3. DROPDOWN (Escritorio)
+   3. DROPDOWN (Escritorio - Con retardo)
    ========================================= */
 .dropdown {
     position: absolute;
@@ -116,7 +114,7 @@ nav ul li:hover .dropdown {
 
 .menu-separator {
     display: block;
-    padding: 12px 18px;
+    padding: 10px 18px;
     font-weight: bold;
     color: var(--azul-medio);
     text-transform: uppercase;
@@ -126,16 +124,13 @@ nav ul li:hover .dropdown {
 }
 
 /* =========================================
-   4. CONTENIDO Y COMPONENTES (Hero, Grid, Cards)
+   4. CONTENIDO (Hero, Grid, Listas)
    ========================================= */
 .hero {
     background: linear-gradient(135deg, #0f4c75, #3282b8);
     color: var(--blanco);
     padding: 70px 60px;
 }
-
-.hero h1 { font-size: 36px; max-width: 1000px; }
-.hero p { margin-top: 20px; font-size: 16.5px; color: #ecf6ff; }
 
 .container { padding: 40px 60px; max-width: 1400px; margin: 0 auto; }
 
@@ -157,107 +152,63 @@ nav ul li:hover .dropdown {
 
 .card:hover { transform: translateY(-8px); }
 
-/* SECCIONES Y FORMULARIOS */
+/* VISIBILIDAD DE SECCIONES */
 .seccion-contenido { display: none; }
-.seccion-activa { display: block; }
+.seccion-activa { display: block !important; }
 
-.login-card, .form-subida {
-    max-width: 500px;
-    margin: 40px auto;
-    background: white;
-    padding: 35px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-}
-
-.form-subida { max-width: 700px; }
-
-input, select, textarea {
-    width: 100%;
-    padding: 12px;
-    margin-top: 8px;
-    border: 1px solid #dfe6e9;
-    border-radius: 10px;
-}
-
-.btn-subir {
-    background: var(--verde-acento);
-    color: white;
-    border: none;
-    padding: 15px;
-    width: 100%;
-    border-radius: 10px;
-    font-weight: bold;
-    cursor: pointer;
+/* CONTENEDOR DE ARTÍCULOS */
+.lista-container {
+    margin-top: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 .articulo-item {
     background: white;
     padding: 20px;
     border-radius: 12px;
-    margin-bottom: 15px;
     border-left: 6px solid var(--azul-claro);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.04);
 }
 
 /* =========================================
-   5. DISEÑO RESPONSIVO (MÓVIL Y TABLET)
+   5. DISEÑO RESPONSIVO (Solo Celulares)
    ========================================= */
-
-/* Tablets y pantallas medianas */
-@media (max-width: 1024px) {
-    header { padding: 0 20px; }
-    .hero, .container { padding: 40px 20px; }
-}
-
-/* Celulares (Ajuste Crítico) */
 @media (max-width: 768px) {
-    .menu-icon { display: block; } /* Mostramos el ☰ */
+    header { padding: 0 20px; position: relative; }
+    
+    .navbar { justify-content: space-between; } /* Solo en móvil se separan */
+    .menu-icon { display: block; }
 
     nav {
-        display: none; /* Oculto hasta que se active */
+        display: none;
         position: absolute;
         top: 70px;
         left: 0;
         width: 100%;
         background-color: var(--azul-oscuro);
         z-index: 2000;
-        border-top: 1px solid rgba(255,255,255,0.1);
     }
 
     .nav-active { display: block !important; }
-
     nav ul { flex-direction: column; }
+    nav ul li a { background: var(--azul-oscuro) !important; padding: 15px 20px; }
 
-    nav ul li a {
-        padding: 20px;
-        border-bottom: 1px solid rgba(255,255,255,0.05);
-        background: var(--azul-oscuro) !important; /* Evita el color oscuro al dar clic */
-    }
-
-    /* Dropdowns en móvil se vuelven listas planas */
     .dropdown {
         position: static;
         visibility: visible;
         opacity: 1;
         pointer-events: auto;
         transform: none;
-        box-shadow: none;
         background-color: #0c2a3d;
+        box-shadow: none;
     }
 
-    .dropdown a {
-        color: #ecf6ff;
-        padding-left: 40px;
-        background: transparent !important;
-    }
-
-    .menu-separator {
-        background: #061621;
-        color: var(--verde-acento);
-        padding-left: 20px;
-    }
-
-    .hero h1 { font-size: 26px; }
+    .dropdown a { padding-left: 40px; color: #ecf6ff; }
+    .hero { padding: 40px 20px; }
+    .hero h1 { font-size: 24px; }
+    .container { padding: 30px 20px; }
     .grid { grid-template-columns: 1fr; }
     #grafica-reflexion { height: 300px !important; }
 }
