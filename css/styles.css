@@ -282,3 +282,62 @@ nav ul li:hover .dropdown {
     .container { padding: 40px 30px; }
     .login-card { margin: 30px auto; padding: 25px; }
 }
+/* ==========================================
+   AJUSTES PARA MÓVILES Y TABLETS
+   ========================================== */
+
+@media (max-width: 768px) {
+    /* 1. Navbar: De horizontal a lista vertical */
+    .navbar {
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    nav ul {
+        flex-direction: column;
+        width: 100%;
+        gap: 5px;
+        padding: 0;
+    }
+
+    nav ul li {
+        width: 100%;
+        text-align: center;
+    }
+
+    /* Ajuste para que los dropdowns no se encimen */
+    .dropdown {
+        position: static;
+        width: 100%;
+        box-shadow: none;
+        background: rgba(0,0,0,0.05);
+    }
+
+    /* 2. Hero: Texto más pequeño en celulares */
+    .hero h1 {
+        font-size: 1.8rem;
+    }
+
+    /* 3. Grid: De 2 columnas a 1 sola para que las cartas no se aplasten */
+    .grid {
+        grid-template-columns: 1fr !important;
+        gap: 15px;
+    }
+
+    /* 4. Formularios: Que ocupen todo el ancho */
+    .form-subida, .login-card {
+        width: 95% !important;
+        margin: 10px auto;
+        padding: 15px;
+    }
+
+    /* Ajuste para el año y categoría en vertical si es muy pequeño */
+    div[style*="display: flex"] {
+        flex-direction: column !important;
+    }
+
+    /* 5. Gráfica: Ajustar altura para que no ocupe toda la pantalla */
+    #grafica-reflexion {
+        height: 350px !important;
+    }
+}
