@@ -54,7 +54,7 @@ nav ul {
 }
 
 nav ul li {
-    position: relative; /* Indispensable para que el menú no flote a la izquierda */
+    position: relative; 
 }
 
 nav ul li a {
@@ -76,33 +76,28 @@ nav ul li a:hover {
    ========================================= */
 .dropdown {
     position: absolute;
-    top: 70px; /* Alineado al alto de la navbar */
+    top: 70px; 
     left: 0;
     background-color: var(--blanco);
     min-width: 260px;
     border-radius: 0 0 12px 12px;
     box-shadow: 0 12px 28px rgba(0,0,0,0.12);
     z-index: 1000;
-
-    /* Configuración para el efecto de suavizado y tiempo de espera */
     display: block; 
     visibility: hidden;
     opacity: 0;
     transform: translateY(10px);
     transition: all 0.3s ease;
     pointer-events: none;
-    
-    /* El truco de los 0.2s para que no se cierre rápido al bajar el cursor */
     transition-delay: 0.2s; 
 }
 
-/* Mostrar el menú al pasar el cursor */
 nav ul li:hover .dropdown {
     visibility: visible;
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
-    transition-delay: 0s; /* Que aparezca instantáneo al entrar */
+    transition-delay: 0s; 
 }
 
 .dropdown a {
@@ -186,11 +181,24 @@ nav ul li:hover .dropdown {
    ESTILOS DE SECCIONES Y FORMULARIO
    ========================================= */
 .seccion-contenido {
-    display: none; /* Controlado por JS */
+    display: none; 
 }
 
 .seccion-activa {
     display: block;
+}
+
+/* --- ESTILO PARA EL LOGIN (Más pequeño y centrado) --- */
+.login-card {
+    max-width: 450px; /* Aquí controlas qué tan pequeño es el cuadro */
+    margin: 60px auto; /* Lo centra y le da espacio arriba */
+    padding: 40px;
+}
+
+.login-card h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: var(--azul-oscuro);
 }
 
 .form-subida {
@@ -214,7 +222,7 @@ nav ul li:hover .dropdown {
     color: var(--azul-medio);
 }
 
-.form-subida input, .form-subida select, .form-subida textarea {
+.form-subida input, .form-subida select, .form-subida textarea, #seccion-login input {
     width: 100%;
     padding: 12px;
     margin-top: 8px;
@@ -272,4 +280,5 @@ nav ul li:hover .dropdown {
     nav ul { flex-wrap: wrap; margin-top: 10px; }
     .hero { padding: 50px 30px; }
     .container { padding: 40px 30px; }
+    .login-card { margin: 30px auto; padding: 25px; }
 }

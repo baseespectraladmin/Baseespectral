@@ -2,19 +2,21 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Base de Datos Espectral</title>
+    <title>EspectroEdu - Base de Datos Espectral</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    
+    
 </head>
 <body>
 
 <header>
     <div class="navbar">
-        <div class="logo" onclick="mostrarSeccion('home')">Base de Datos Espectral</div>
+        <div class="logo" onclick="mostrarSeccion('home')">EspectroEdu</div>
         <nav>
             <ul>
                 <li><a onclick="mostrarSeccion('home')">Home</a></li>
-
                 <li>
                     <a>Espectros</a>
                     <div class="dropdown">
@@ -22,7 +24,6 @@
                         <a onclick="mostrarSeccion('espectros-reflexion')">Espectros de reflexión difusa</a>
                     </div>
                 </li>
-
                 <li>
                     <a>Artículos</a>
                     <div class="dropdown">
@@ -31,32 +32,49 @@
                         <a onclick="mostrarSeccion('art-referencias')">Artículos de referencias</a>
                     </div>
                 </li>
-
                 <li>
                     <a>Reflexión Difusa</a>
                     <div class="dropdown">
-                        <a onclick="mostrarSeccion('ref-agricola')">Reflexión difusa agrícola</a>
-                        <a onclick="mostrarSeccion('ref-aplicada')">Reflexión difusa aplicada</a>
-                        <a onclick="mostrarSeccion('ref-simulada')">Reflexión difusa simulada</a>
+                        <a onclick="mostrarSeccion('ref-agricola')">Reflexión agrícola</a>
+                        <a onclick="mostrarSeccion('ref-aplicada')">Reflexión aplicada</a>
+                        <a onclick="mostrarSeccion('ref-simulada')">Reflexión simulada</a>
                     </div>
                 </li>
-
                 <li>
                     <a>Fluorescencia</a>
                     <div class="dropdown">
                         <a onclick="mostrarSeccion('fluo-medica')">Fluorescencia médica</a>
-                        <a onclick="mostrarSeccion('fluo-med-aplicada')">Fluorescencia médica aplicada</a>
-                        <a onclick="mostrarSeccion('fluo-med-simulada')">Fluorescencia médica simulada</a>
+                        <a onclick="mostrarSeccion('fluo-med-aplicada')">F. Médica Aplicada</a>
+                        <a onclick="mostrarSeccion('fluo-med-simulada')">F. Médica Simulada</a>
                         <a onclick="mostrarSeccion('fluo-agricola')">Fluorescencia agrícola</a>
-                        <a onclick="mostrarSeccion('fluo-agri-aplicada')">Fluorescencia agrícola aplicada</a>
-                        <a onclick="mostrarSeccion('fluo-agri-simulada')">Fluorescencia agrícola simulada</a>
+                        <a onclick="mostrarSeccion('fluo-agri-aplicada')">F. Agrícola Aplicada</a>
+                        <a onclick="mostrarSeccion('fluo-agri-simulada')">F. Agrícola Simulada</a>
                     </div>
                 </li>
-                <li><a onclick="mostrarSeccion('seccion-subir')" style="color: var(--verde-acento);">+ Subir</a></li>
+                <li><a onclick="mostrarSeccion('seccion-login')" id="nav-login">Admin Login</a></li>
+                <li id="nav-subir" style="display: none;">
+                    <a onclick="mostrarSeccion('seccion-subir')" style="color: var(--verde-acento);">+ Subir</a>
+                </li>
             </ul>
         </nav>
     </div>
 </header>
+
+<div id="seccion-login" class="seccion-contenido container">
+    <div class="card login-card">
+        <h2>Acceso Administrativo</h2>
+        <div class="form-group">
+            <label>Usuario:</label>
+            <input type="text" id="admin-user" placeholder="Tu usuario">
+        </div>
+        <div class="form-group">
+            <label>Contraseña:</label>
+            <input type="password" id="admin-pass" placeholder="Tu contraseña">
+        </div>
+        <button onclick="verificarAdmin()" class="btn-subir">Entrar</button>
+        <p id="error-login" style="color: red; display: none; margin-top: 10px; text-align: center;"></p>
+    </div>
+</div>
 
 <div id="home" class="seccion-contenido seccion-activa">
     <section class="hero">
@@ -65,13 +83,13 @@
     </section>
     <main class="container">
         <section class="grid">
-            <div class="card" onclick="mostrarSeccion('espectros-absorbancia')">
-                <h3>Espectros de Absorbancia</h3>
-                <p>Firmas espectrales para análisis químicos y biomédicos.</p>
+            <div class="card" onclick="mostrarSeccion('espectros-reflexion')">
+                <h3>Espectros de Reflexión</h3>
+                <p>Visualiza gráficas interactivas de reflectancia.</p>
             </div>
             <div class="card" onclick="mostrarSeccion('art-investigacion')">
                 <h3>Artículos Científicos</h3>
-                <p>Repositorio de investigación científica vinculada.</p>
+                <p>Repositorio vinculado a datos espectrales.</p>
             </div>
         </section>
     </main>
@@ -83,39 +101,47 @@
         <form id="formArticulo">
             <label>Título:</label>
             <input type="text" id="titulo" required placeholder="Título del trabajo">
-            
             <label>Autores:</label>
-            <input type="text" id="autores" required placeholder="Ej: Isai G., Dr. Enrique González">
-            
+            <input type="text" id="autores" required placeholder="Autores">
             <label>Año y Categoría:</label>
             <div style="display: flex; gap: 10px;">
                 <input type="number" id="anio" required placeholder="2026" style="flex:1">
                 <select id="categoria" required style="flex:2">
-                    <optgroup label="Artículos">
-                        <option value="art-investigacion">Artículos de Investigación</option>
-                        <option value="art-difusion">Artículos de Difusión</option>
-                        <option value="art-referencias">Artículos de Referencias</option>
-                    </optgroup>
-                    <optgroup label="Reflexión Difusa">
-                        <option value="ref-agricola">Reflexión Agrícola</option>
-                        <option value="ref-aplicada">Reflexión Aplicada</option>
-                        <option value="ref-simulada">Reflexión Simulada</option>
-                    </optgroup>
-                    <optgroup label="Fluorescencia">
-                        <option value="fluo-medica">Fluorescencia Médica</option>
-                        <option value="fluo-med-aplicada">Fluorescencia Médica Aplicada</option>
-                        <option value="fluo-med-simulada">Fluorescencia Médica Simulada</option>
-                        <option value="fluo-agricola">Fluorescencia Agrícola</option>
-                        <option value="fluo-agri-aplicada">Fluorescencia Agrícola Aplicada</option>
-                        <option value="fluo-agri-simulada">Fluorescencia Agrícola Simulada</option>
-                    </optgroup>
+                    <option value="art-investigacion">Artículos de Investigación</option>
+                    <option value="art-difusion">Artículos de Difusión</option>
+                    <option value="art-referencias">Artículos de Referencias</option>
+                    <option value="ref-agricola">Reflexión Agrícola</option>
                 </select>
             </div>
-
             <label>Archivo (PDF):</label>
             <input type="file" id="archivo" accept=".pdf" required>
-            <button type="submit" class="btn-subir">Guardar en Base de Datos</button>
+            <button type="submit" class="btn-subir">Guardar</button>
         </form>
+    </div>
+</div>
+
+<div id="espectros-absorbancia" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Espectros de Absorbancia</h1><hr>
+    <div id="lista-espectros-absorbancia" class="lista-container"></div>
+</div>
+
+<div id="espectros-reflexion" class="seccion-contenido container">
+    <h1 class="titulo-seccion">Espectros de Reflexión Difusa</h1><hr>
+    <div style="position: relative; width: 100%; margin-top: 20px;">
+        <div id="grafica-reflexion" style="width:100%; height:500px; background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);"></div>
+        <div id="custom-tooltip" style="position:absolute; pointer-events:none; display:none; transform: translate(-50%, -115%); z-index:1000;">
+            <div style="width:240px; height:65px; border-radius:8px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.25); position:relative;">
+                <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex;">
+                    <div style="width:33.3%; background:#006847;"></div>
+                    <div style="width:33.3%; background:#ffffff;"></div>
+                    <div style="width:33.3%; background:#ce1126;"></div>
+                </div>
+                <div style="position:relative; z-index:2; padding:10px; color:#000; font-weight:600; text-align:center; background:rgba(255,255,255,0.4);">
+                    <div>λ: <span id="lambda-value">--</span> nm</div>
+                    <div>Ref: <span id="refl-value">--</span> %</div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -127,13 +153,6 @@
 </div>
 <div id="art-referencias" class="seccion-contenido container">
     <h1 class="titulo-seccion">Artículos de Referencias</h1><hr><div id="lista-art-referencias" class="lista-container"></div>
-</div>
-
-<div id="espectros-absorbancia" class="seccion-contenido container">
-    <h1 class="titulo-seccion">Espectros de Absorbancia</h1><hr><div id="lista-espectros-absorbancia" class="lista-container"></div>
-</div>
-<div id="espectros-reflexion" class="seccion-contenido container">
-    <h1 class="titulo-seccion">Espectros de Reflexión Difusa</h1><hr><div id="lista-espectros-reflexion" class="lista-container"></div>
 </div>
 
 <div id="ref-agricola" class="seccion-contenido container">
@@ -164,7 +183,7 @@
 <div id="fluo-agri-simulada" class="seccion-contenido container">
     <h1 class="titulo-seccion">Fluorescencia Agrícola Simulada</h1><hr><div id="lista-fluo-agri-simulada" class="lista-container"></div>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
