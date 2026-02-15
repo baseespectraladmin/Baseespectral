@@ -1,5 +1,5 @@
 /* =========================================
-   VARIABLES Y CONFIGURACIÓN GLOBAL
+   1. VARIABLES Y CONFIGURACIÓN GLOBAL
    ========================================= */
 :root {
     --azul-oscuro: #081f2d;
@@ -26,16 +26,18 @@ body {
 }
 
 /* =========================================
-   NAVBAR (Barra de Navegación)
+   2. NAVBAR Y HEADER
    ========================================= */
 header {
     background: linear-gradient(90deg, var(--azul-oscuro), var(--azul-medio));
     padding: 0 40px;
+    position: relative; /* Para el despliegue del menú móvil */
 }
 
 .navbar {
     display: flex;
     align-items: center;
+    justify-content: space-between; /* Logo a la izquierda, Menú a la derecha */
     height: 70px;
 }
 
@@ -43,8 +45,14 @@ header {
     color: var(--blanco);
     font-size: 20px;
     font-weight: 600;
-    margin-right: 40px;
+    cursor: pointer;
     white-space: nowrap;
+}
+
+.menu-icon {
+    display: none; /* Oculto en PC y Tablets */
+    font-size: 28px;
+    color: white;
     cursor: pointer;
 }
 
@@ -53,9 +61,7 @@ nav ul {
     display: flex;
 }
 
-nav ul li {
-    position: relative; 
-}
+nav ul li { position: relative; }
 
 nav ul li a {
     display: block;
@@ -67,12 +73,10 @@ nav ul li a {
     cursor: pointer;
 }
 
-nav ul li a:hover {
-    background-color: rgba(255,255,255,0.12);
-}
+nav ul li a:hover { background-color: rgba(255,255,255,0.12); }
 
 /* =========================================
-   DROPDOWN (Menú Desplegable con Retardo)
+   3. DROPDOWN (Escritorio)
    ========================================= */
 .dropdown {
     position: absolute;
@@ -83,13 +87,11 @@ nav ul li a:hover {
     border-radius: 0 0 12px 12px;
     box-shadow: 0 12px 28px rgba(0,0,0,0.12);
     z-index: 1000;
-    display: block; 
     visibility: hidden;
     opacity: 0;
     transform: translateY(10px);
     transition: all 0.3s ease;
     pointer-events: none;
-    transition-delay: 0.2s; 
 }
 
 nav ul li:hover .dropdown {
@@ -97,7 +99,6 @@ nav ul li:hover .dropdown {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
-    transition-delay: 0s; 
 }
 
 .dropdown a {
@@ -106,7 +107,6 @@ nav ul li:hover .dropdown {
     font-size: 14px;
     display: block;
     text-decoration: none;
-    transition: background 0.2s;
 }
 
 .dropdown a:hover {
@@ -114,8 +114,19 @@ nav ul li:hover .dropdown {
     color: var(--azul-medio);
 }
 
+.menu-separator {
+    display: block;
+    padding: 12px 18px;
+    font-weight: bold;
+    color: var(--azul-medio);
+    text-transform: uppercase;
+    font-size: 11px;
+    background: #f8f9fa;
+    pointer-events: none;
+}
+
 /* =========================================
-   HERO (Mensaje Principal)
+   4. CONTENIDO Y COMPONENTES (Hero, Grid, Cards)
    ========================================= */
 .hero {
     background: linear-gradient(135deg, #0f4c75, #3282b8);
@@ -123,32 +134,14 @@ nav ul li:hover .dropdown {
     padding: 70px 60px;
 }
 
-.hero h1 {
-    font-size: 36px;
-    font-weight: 600;
-    max-width: 1000px;
-}
+.hero h1 { font-size: 36px; max-width: 1000px; }
+.hero p { margin-top: 20px; font-size: 16.5px; color: #ecf6ff; }
 
-.hero p {
-    margin-top: 20px;
-    max-width: 1000px;
-    font-size: 16.5px;
-    line-height: 1.8;
-    color: #ecf6ff;
-}
-
-/* =========================================
-   CONTENEDORES Y GRID
-   ========================================= */
-.container {
-    padding: 40px 60px;
-    max-width: 1400px;
-    margin: 0 auto;
-}
+.container { padding: 40px 60px; max-width: 1400px; margin: 0 auto; }
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 28px;
 }
 
@@ -158,77 +151,33 @@ nav ul li:hover .dropdown {
     border-radius: 18px;
     box-shadow: 0 10px 22px rgba(0,0,0,0.06);
     border-top: 5px solid var(--azul-claro);
-    transition: transform 0.25s, box-shadow 0.25s;
+    cursor: pointer;
+    transition: transform 0.25s;
 }
 
-.card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 16px 32px rgba(0,0,0,0.08);
-}
+.card:hover { transform: translateY(-8px); }
 
-.card h3 {
-    font-size: 19px;
-    margin-bottom: 14px;
-    color: var(--azul-medio);
-}
+/* SECCIONES Y FORMULARIOS */
+.seccion-contenido { display: none; }
+.seccion-activa { display: block; }
 
-.card p {
-    font-size: 14.5px;
-    color: var(--gris);
-}
-
-/* =========================================
-   ESTILOS DE SECCIONES Y FORMULARIO
-   ========================================= */
-.seccion-contenido {
-    display: none; 
-}
-
-.seccion-activa {
-    display: block;
-}
-
-/* --- ESTILO PARA EL LOGIN (Más pequeño y centrado) --- */
-.login-card {
-    max-width: 450px; /* Aquí controlas qué tan pequeño es el cuadro */
-    margin: 60px auto; /* Lo centra y le da espacio arriba */
-    padding: 40px;
-}
-
-.login-card h2 {
-    text-align: center;
-    margin-bottom: 30px;
-    color: var(--azul-oscuro);
-}
-
-.form-subida {
-    max-width: 700px;
-    margin: 0 auto;
+.login-card, .form-subida {
+    max-width: 500px;
+    margin: 40px auto;
     background: white;
     padding: 35px;
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.05);
 }
 
-.form-subida h2 {
-    color: var(--azul-oscuro);
-    margin-bottom: 25px;
-}
+.form-subida { max-width: 700px; }
 
-.form-subida label {
-    display: block;
-    margin-top: 15px;
-    font-weight: 600;
-    color: var(--azul-medio);
-}
-
-.form-subida input, .form-subida select, .form-subida textarea, #seccion-login input {
+input, select, textarea {
     width: 100%;
     padding: 12px;
     margin-top: 8px;
     border: 1px solid #dfe6e9;
     border-radius: 10px;
-    background-color: #fcfdfe;
 }
 
 .btn-subir {
@@ -239,105 +188,76 @@ nav ul li:hover .dropdown {
     width: 100%;
     border-radius: 10px;
     font-weight: bold;
-    font-size: 16px;
-    margin-top: 25px;
     cursor: pointer;
-    transition: filter 0.2s;
 }
 
-.btn-subir:hover {
-    filter: brightness(1.1);
-}
-
-/* =========================================
-   LISTADO DE ARTÍCULOS
-   ========================================= */
 .articulo-item {
     background: white;
     padding: 20px;
     border-radius: 12px;
     margin-bottom: 15px;
     border-left: 6px solid var(--azul-claro);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.04);
-}
-
-.articulo-item h3 {
-    color: var(--azul-oscuro);
-    margin-bottom: 5px;
-}
-
-.articulo-item p {
-    font-size: 14px;
-    color: var(--gris);
 }
 
 /* =========================================
-   RESPONSIVE
+   5. DISEÑO RESPONSIVO (MÓVIL Y TABLET)
    ========================================= */
-@media (max-width: 900px) {
+
+/* Tablets y pantallas medianas */
+@media (max-width: 1024px) {
     header { padding: 0 20px; }
-    .navbar { flex-wrap: wrap; height: auto; padding: 10px 0; }
-    nav ul { flex-wrap: wrap; margin-top: 10px; }
-    .hero { padding: 50px 30px; }
-    .container { padding: 40px 30px; }
-    .login-card { margin: 30px auto; padding: 25px; }
+    .hero, .container { padding: 40px 20px; }
 }
-/* ==========================================
-   AJUSTES PARA MÓVILES Y TABLETS
-   ========================================== */
 
+/* Celulares (Ajuste Crítico) */
 @media (max-width: 768px) {
-    /* 1. Navbar: De horizontal a lista vertical */
-    .navbar {
-        flex-direction: column;
-        padding: 10px;
-    }
+    .menu-icon { display: block; } /* Mostramos el ☰ */
 
-    nav ul {
-        flex-direction: column;
+    nav {
+        display: none; /* Oculto hasta que se active */
+        position: absolute;
+        top: 70px;
+        left: 0;
         width: 100%;
-        gap: 5px;
-        padding: 0;
+        background-color: var(--azul-oscuro);
+        z-index: 2000;
+        border-top: 1px solid rgba(255,255,255,0.1);
     }
 
-    nav ul li {
-        width: 100%;
-        text-align: center;
+    .nav-active { display: block !important; }
+
+    nav ul { flex-direction: column; }
+
+    nav ul li a {
+        padding: 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        background: var(--azul-oscuro) !important; /* Evita el color oscuro al dar clic */
     }
 
-    /* Ajuste para que los dropdowns no se encimen */
+    /* Dropdowns en móvil se vuelven listas planas */
     .dropdown {
         position: static;
-        width: 100%;
+        visibility: visible;
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
         box-shadow: none;
-        background: rgba(0,0,0,0.05);
+        background-color: #0c2a3d;
     }
 
-    /* 2. Hero: Texto más pequeño en celulares */
-    .hero h1 {
-        font-size: 1.8rem;
+    .dropdown a {
+        color: #ecf6ff;
+        padding-left: 40px;
+        background: transparent !important;
     }
 
-    /* 3. Grid: De 2 columnas a 1 sola para que las cartas no se aplasten */
-    .grid {
-        grid-template-columns: 1fr !important;
-        gap: 15px;
+    .menu-separator {
+        background: #061621;
+        color: var(--verde-acento);
+        padding-left: 20px;
     }
 
-    /* 4. Formularios: Que ocupen todo el ancho */
-    .form-subida, .login-card {
-        width: 95% !important;
-        margin: 10px auto;
-        padding: 15px;
-    }
-
-    /* Ajuste para el año y categoría en vertical si es muy pequeño */
-    div[style*="display: flex"] {
-        flex-direction: column !important;
-    }
-
-    /* 5. Gráfica: Ajustar altura para que no ocupe toda la pantalla */
-    #grafica-reflexion {
-        height: 350px !important;
-    }
+    .hero h1 { font-size: 26px; }
+    .grid { grid-template-columns: 1fr; }
+    #grafica-reflexion { height: 300px !important; }
 }

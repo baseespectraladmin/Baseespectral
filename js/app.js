@@ -206,3 +206,11 @@ async function inicializarGrafica() {
         });
     } catch (e) { console.error("Error datos espectrales:", e); }
 }
+// Función para abrir/cerrar el menú en celulares
+function toggleMenu() {
+    const nav = document.getElementById('nav-menu');
+    // Solo actuamos si la pantalla es de celular
+    if (window.innerWidth <= 768) {
+        nav.classList.toggle('nav-active');
+    }
+}
