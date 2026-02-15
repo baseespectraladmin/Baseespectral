@@ -212,3 +212,85 @@ nav ul li:hover .dropdown {
     .grid { grid-template-columns: 1fr; }
     #grafica-reflexion { height: 300px !important; }
 }
+/* =========================================
+   REFUERZO DE FORMULARIOS (Login y Subida)
+   ========================================= */
+
+/* Contenedor base para que las secciones se centren bien */
+.container {
+    padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Estilo unificado para las tarjetas de formulario */
+.login-card, .form-subida {
+    background: var(--blanco);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    margin: 20px auto;
+    width: 100%;
+    max-width: 450px; /* Tamaño ideal para Login */
+    border-top: 5px solid var(--azul-claro);
+}
+
+.form-subida {
+    max-width: 700px; /* La subida es más ancha para los campos dobles */
+}
+
+/* Títulos de los formularios */
+.login-card h2, .form-subida h2 {
+    text-align: center;
+    color: var(--azul-oscuro);
+    margin-bottom: 25px;
+    font-size: 1.5rem;
+}
+
+/* Inputs y Selects */
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--azul-medio);
+    font-size: 14px;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #dfe6e9;
+    border-radius: 10px;
+    background-color: #fcfdfe;
+    font-size: 15px;
+    transition: border-color 0.2s;
+}
+
+input:focus {
+    border-color: var(--azul-claro);
+    outline: none;
+}
+
+/* Botón de acción */
+.btn-subir {
+    background: var(--verde-acento);
+    color: white;
+    border: none;
+    padding: 14px;
+    width: 100%;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 16px;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: transform 0.2s, filter 0.2s;
+}
+
+.btn-subir:hover {
+    filter: brightness(1.05);
+    transform: translateY(-2px);
+}
