@@ -3,6 +3,9 @@ const SUPABASE_URL = "https://nxktvjduooqfgzzrdfot.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54a3R2amR1b29xZmd6enJkZm90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMTg1ODgsImV4cCI6MjA4NjY5NDU4OH0.4hYin09mna34MYg3cGdjtzIyvmZOntE5Xceofa9yTAs";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Variable de estado para controlar funciones administrativas en la interfaz
+let adminLogueado = false; 
+
 // 2. MANEJO DE NAVEGACIÓN Y CARGA DE DATOS
 let graficaCargada = false;
 
@@ -33,7 +36,6 @@ async function cargarArticulosDesdeNube(categoria) {
     contenedor.innerHTML = '<p style="color: var(--gris); padding: 20px;">Consultando Base de Datos Espectral...</p>';
 
     try {
-        // Consultamos la tabla 'articulos' ordenando por 'anio' (2026 -> 2025...)
         const { data, error } = await _supabase
             .from('articulos') 
             .select('*')
@@ -43,7 +45,7 @@ async function cargarArticulosDesdeNube(categoria) {
         if (error) throw error;
 
         if (data.length === 0) {
-            contenedor.innerHTML = '<p style="color: var(--gris); padding: 20px;">Aún no hay archivos registrados en esta categoría.</p>';
+            contenedor.innerHTML = '<p style="color: var(--gris); padding: 20px;">No hay registros en esta categoría.</p>';
             return;
         }
 
@@ -51,98 +53,105 @@ async function cargarArticulosDesdeNube(categoria) {
         data.forEach(art => {
             const item = document.createElement('div');
             item.className = 'articulo-item';
+            
+            // Botón de eliminar: Solo se genera si el estado de administrador es activo
+            const controlAdmin = adminLogueado 
+                ? `<button onclick="borrarArticulo('${art.id}')" style="background:none; border:none; color: #e74c3c; cursor:pointer; font-size: 13px; font-weight:bold;">🗑️ Eliminar</button>` 
+                : '';
+
             item.innerHTML = `
                 <h3>${art.titulo}</h3>
                 <p><strong>Autores:</strong> ${art.autores} | <strong>Año:</strong> ${art.anio}</p>
-                <a href="${art.pdf_url}" target="_blank" style="color: var(--azul-medio); font-weight: bold; text-decoration: none; display: inline-block; margin-top: 10px;">
-                    📄 Ver Documento PDF
-                </a>
+                <div style="margin-top: 10px; display: flex; gap: 20px; align-items: center;">
+                    <a href="${art.pdf_url}" target="_blank" style="color: var(--azul-medio); font-weight: bold; text-decoration: none;">📄 Ver PDF</a>
+                    ${controlAdmin}
+                </div>
             `;
             contenedor.appendChild(item);
         });
     } catch (err) {
         console.error("Error de lectura:", err);
-        contenedor.innerHTML = '<p style="color: red; padding: 20px;">Error al conectar con la nube de Supabase.</p>';
+        contenedor.innerHTML = '<p style="color: red; padding: 20px;">Error de conexión con el servidor.</p>';
     }
 }
 
-// ==========================================
 // 3. LÓGICA DEL FORMULARIO DE SUBIDA (ADMIN)
-// ==========================================
 const formArticulo = document.getElementById('formArticulo');
 if (formArticulo) {
     formArticulo.addEventListener('submit', async function(e) {
         e.preventDefault();
-        
         const archivoPDF = document.getElementById('archivo').files[0];
-        if (!archivoPDF) return alert("Por favor selecciona un archivo PDF");
+        if (!archivoPDF) return alert("Selecciona un archivo PDF");
 
-        // --- NUEVO: Validación de caracteres especiales ---
-        // Esta regla busca caracteres que NO sean letras, números, puntos o guiones normales
         const regexInvalido = /[^a-zA-Z0-9.\-_ ]/g; 
-        
         if (regexInvalido.test(archivoPDF.name)) {
-            return alert("⚠️ ERROR: El nombre del archivo contiene caracteres no permitidos (como acentos, eñes o guiones especiales).\n\nPor favor, renombra el archivo en tu computadora usando solo letras, números y guiones normales antes de subirlo.");
+            return alert("Error: El nombre del archivo contiene caracteres no permitidos.");
         }
-        // --------------------------------------------------
 
         const nombreArchivo = `${Date.now()}_${archivoPDF.name.replace(/\s+/g, '_')}`;
 
         try {
-            const { error: uploadError } = await _supabase.storage
-                .from('pdfs')
-                .upload(nombreArchivo, archivoPDF);
-
+            const { error: uploadError } = await _supabase.storage.from('pdfs').upload(nombreArchivo, archivoPDF);
             if (uploadError) throw uploadError;
 
-            const { data: { publicUrl } } = _supabase.storage
-                .from('pdfs')
-                .getPublicUrl(nombreArchivo);
+            const { data: { publicUrl } } = _supabase.storage.from('pdfs').getPublicUrl(nombreArchivo);
 
-            const { error: dbError } = await _supabase
-                .from('articulos')
-                .insert([{
-                    titulo: document.getElementById('titulo').value,
-                    autores: document.getElementById('autores').value,
-                    anio: parseInt(document.getElementById('anio').value),
-                    categoria: document.getElementById('categoria').value,
-                    pdf_url: publicUrl
-                }]);
+            const { error: dbError } = await _supabase.from('articulos').insert([{
+                titulo: document.getElementById('titulo').value,
+                autores: document.getElementById('autores').value,
+                anio: parseInt(document.getElementById('anio').value),
+                categoria: document.getElementById('categoria').value,
+                pdf_url: publicUrl
+            }]);
 
             if (dbError) throw dbError;
-
-            alert("¡Éxito! El artículo se ha guardado en la nube.");
+            alert("Artículo guardado correctamente.");
             this.reset();
             mostrarSeccion('home');
-            
-        } catch (err) {
-            console.error("Error de subida:", err);
-            alert("Error: " + err.message);
-        }
+        } catch (err) { alert("Error: " + err.message); }
     });
 }
 
 // 4. SISTEMA DE ACCESO ADMINISTRATIVO
-const CREDENCIALES_ADMIN = { usuario: "isai_admin", pass: "UPT2026" };
+const CREDENCIALES_ADMIN = { usuario: "missas", pass: "123" };
 
 function verificarAdmin() {
     const user = document.getElementById('admin-user').value;
     const pass = document.getElementById('admin-pass').value;
     if (user === CREDENCIALES_ADMIN.usuario && pass === CREDENCIALES_ADMIN.pass) {
+        adminLogueado = true; // Activa permisos de edición en la sesión actual
         document.getElementById('nav-subir').style.display = 'block';
         document.getElementById('nav-login').style.display = 'none';
-        alert("¡Acceso concedido, Isai!");
+        alert("Acceso administrativo concedido.");
         mostrarSeccion('home');
     } else {
         const errLog = document.getElementById('error-login');
         if (errLog) {
             errLog.style.display = 'block';
-            errLog.innerText = "Credenciales incorrectas para la Base Espectral.";
+            errLog.innerText = "Credenciales incorrectas.";
         }
     }
 }
 
-// 5. LÓGICA DEL GRAFICADOR PROFESIONAL
+// FUNCIÓN PARA ELIMINAR REGISTROS
+async function borrarArticulo(id) {
+    if (!confirm("¿Confirmas la eliminación permanente de este registro?")) return;
+
+    try {
+        const { error } = await _supabase
+            .from('articulos')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        alert("Registro eliminado.");
+        location.reload(); 
+    } catch (err) {
+        alert("Error al intentar eliminar: " + err.message);
+    }
+}
+
+// 5. LÓGICA DEL GRAFICADOR
 async function inicializarGrafica() {
     const gd = document.getElementById('grafica-reflexion');
     const tooltip = document.getElementById('custom-tooltip');
@@ -168,7 +177,7 @@ async function inicializarGrafica() {
         const trace = { x: wavelength, y: reflectancia, mode: 'lines', line: { color: '#3282b8', width: 2.5, shape: 'spline' }, hoverinfo: 'none' };
         const hoverTrace = { x: [0], y: [0], mode: 'markers', marker: { size: 12, color: '#006847', line: { width: 3, color: '#ffffff' } }, hoverinfo: 'none' };
         const layout = {
-            title: { text: '<b>Espectro de Reflexión Difusa - UPT</b>', font: { family: 'Segoe UI', size: 20, color: '#081f2d' } },
+            title: { text: '<b>Espectro de Reflexión Difusa</b>', font: { family: 'Segoe UI', size: 20, color: '#081f2d' } },
             xaxis: { title: 'Longitud de onda (nm)', gridcolor: '#e2e8f0', zeroline: false, range: [400, 800] },
             yaxis: { title: 'Reflexión (%)', gridcolor: '#e2e8f0', zeroline: false, range: [0, 100] },
             paper_bgcolor: '#fcfdfe', plot_bgcolor: '#ffffff', hovermode: false, showlegend: false, margin: { l: 60, r: 30, t: 80, b: 60 }
@@ -206,10 +215,9 @@ async function inicializarGrafica() {
         });
     } catch (e) { console.error("Error datos espectrales:", e); }
 }
-// Función para abrir/cerrar el menú en celulares
+
 function toggleMenu() {
     const nav = document.getElementById('nav-menu');
-    // Solo actuamos si la pantalla es de celular
     if (window.innerWidth <= 768) {
         nav.classList.toggle('nav-active');
     }

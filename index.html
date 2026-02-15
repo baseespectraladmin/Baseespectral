@@ -13,6 +13,7 @@
     <div class="navbar">
         <div class="logo" onclick="mostrarSeccion('home')">Base espectral</div>
         <div class="menu-icon" onclick="toggleMenu()">☰</div>
+        
         <nav id="nav-menu">
             <ul>
                 <li><a onclick="mostrarSeccion('home'); toggleMenu()">Home</a></li>
@@ -80,15 +81,15 @@
 </div>
 
 <div id="seccion-login" class="seccion-contenido container">
-    <div class="card login-card">
+    <div class="login-card">
         <h2>Acceso Administrativo</h2>
         <div class="form-group">
             <label>Usuario:</label>
-            <input type="text" id="admin-user" placeholder="Tu usuario">
+            <input type="text" id="admin-user" placeholder="Usuario">
         </div>
         <div class="form-group">
             <label>Contraseña:</label>
-            <input type="password" id="admin-pass" placeholder="Tu contraseña">
+            <input type="password" id="admin-pass" placeholder="Contraseña">
         </div>
         <button onclick="verificarAdmin()" class="btn-subir">Entrar</button>
         <p id="error-login" style="color: red; display: none; margin-top: 10px; text-align: center;"></p>
@@ -129,18 +130,18 @@
             </div>
             <label>Archivo (PDF):</label>
             <input type="file" id="archivo" accept=".pdf" required>
-            <button type="submit" class="btn-subir">Guardar</button>
+            <button type="submit" class="btn-subir">Guardar en Base espectral</button>
         </form>
     </div>
 </div>
 
 <div id="espectros-absorbancia" class="seccion-contenido container">
-    <h1 class="titulo-seccion">Espectros de Absorbancia</h1><hr>
+    <h1>Espectros de Absorbancia</h1><hr>
     <div id="lista-espectros-absorbancia" class="lista-container"></div>
 </div>
 
 <div id="espectros-reflexion" class="seccion-contenido container">
-    <h1 class="titulo-seccion">Espectros de Reflexión Difusa</h1><hr>
+    <h1>Espectros de Reflexión Difusa</h1><hr>
     <div style="position: relative; width: 100%; margin-top: 20px;">
         <div id="grafica-reflexion" style="width:100%; height:500px; background: white; border-radius: 15px;"></div>
         <div id="custom-tooltip" style="position:absolute; pointer-events:none; display:none; transform: translate(-50%, -115%); z-index:1000;">

@@ -49,7 +49,13 @@ header {
 }
 
 .menu-icon {
-    display: none; /* Solo para celulares */
+    display: none; /* Se activa en el @media */
+    font-size: 32px; /* Un poco más grande para el dedo */
+    color: #ffffff !important; /* Blanco brillante */
+    font-weight: bold;
+    cursor: pointer;
+    padding: 10px;
+    line-height: 1; /* Centra el icono verticalmente */
 }
 
 nav ul {
@@ -178,7 +184,12 @@ nav ul li:hover .dropdown {
 @media (max-width: 768px) {
     header { padding: 0 20px; position: relative; }
     
-    .navbar { justify-content: space-between; } /* Solo en móvil se separan */
+    .navbar {
+        display: flex;
+        justify-content: space-between; /* Logo a la izquierda, ☰ a la derecha */
+        width: 100%;
+        padding: 0 10px;
+    }
     .menu-icon { display: block; }
 
     nav {
