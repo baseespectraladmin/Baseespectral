@@ -38,7 +38,7 @@ async function cargarArticulosDesdeNube(categoria) {
             .from('articulos') 
             .select('*')
             .eq('categoria', categoria)
-            .order('anio', { ascending: false }); 
+            .order('anio', { ascending: true }); 
 
         if (error) throw error;
 
@@ -66,35 +66,59 @@ async function cargarArticulosDesdeNube(categoria) {
     }
 }
 
+// ==========================================
 // 3. LÓGICA DEL FORMULARIO DE SUBIDA (ADMIN)
+// ==========================================
 const formArticulo = document.getElementById('formArticulo');
 if (formArticulo) {
     formArticulo.addEventListener('submit', async function(e) {
         e.preventDefault();
+        
         const archivoPDF = document.getElementById('archivo').files[0];
         if (!archivoPDF) return alert("Por favor selecciona un archivo PDF");
 
-        const nombreArchivo = `${Date.now()}_${archivoPDF.name}`;
+        // --- NUEVO: Validación de caracteres especiales ---
+        // Esta regla busca caracteres que NO sean letras, números, puntos o guiones normales
+        const regexInvalido = /[^a-zA-Z0-9.\-_ ]/g; 
+        
+        if (regexInvalido.test(archivoPDF.name)) {
+            return alert("⚠️ ERROR: El nombre del archivo contiene caracteres no permitidos (como acentos, eñes o guiones especiales).\n\nPor favor, renombra el archivo en tu computadora usando solo letras, números y guiones normales antes de subirlo.");
+        }
+        // --------------------------------------------------
+
+        const nombreArchivo = `${Date.now()}_${archivoPDF.name.replace(/\s+/g, '_')}`;
 
         try {
-            const { error: uploadError } = await _supabase.storage.from('pdfs').upload(nombreArchivo, archivoPDF);
+            const { error: uploadError } = await _supabase.storage
+                .from('pdfs')
+                .upload(nombreArchivo, archivoPDF);
+
             if (uploadError) throw uploadError;
 
-            const { data: { publicUrl } } = _supabase.storage.from('pdfs').getPublicUrl(nombreArchivo);
+            const { data: { publicUrl } } = _supabase.storage
+                .from('pdfs')
+                .getPublicUrl(nombreArchivo);
 
-            const { error: dbError } = await _supabase.from('articulos').insert([{
-                titulo: document.getElementById('titulo').value,
-                autores: document.getElementById('autores').value,
-                anio: parseInt(document.getElementById('anio').value),
-                categoria: document.getElementById('categoria').value,
-                pdf_url: publicUrl
-            }]);
+            const { error: dbError } = await _supabase
+                .from('articulos')
+                .insert([{
+                    titulo: document.getElementById('titulo').value,
+                    autores: document.getElementById('autores').value,
+                    anio: parseInt(document.getElementById('anio').value),
+                    categoria: document.getElementById('categoria').value,
+                    pdf_url: publicUrl
+                }]);
 
             if (dbError) throw dbError;
-            alert("¡Éxito! El artículo se ha guardado permanentemente en la nube.");
+
+            alert("¡Éxito! El artículo se ha guardado en la nube.");
             this.reset();
             mostrarSeccion('home');
-        } catch (err) { alert("Error: " + err.message); }
+            
+        } catch (err) {
+            console.error("Error de subida:", err);
+            alert("Error: " + err.message);
+        }
     });
 }
 
