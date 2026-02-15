@@ -3,8 +3,9 @@ const SUPABASE_URL = "https://nxktvjduooqfgzzrdfot.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54a3R2amR1b29xZmd6enJkZm90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMTg1ODgsImV4cCI6MjA4NjY5NDU4OH0.4hYin09mna34MYg3cGdjtzIyvmZOntE5Xceofa9yTAs";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Variable de estado para controlar funciones administrativas en la interfaz
+// Variables de estado administrativo
 let adminLogueado = false; 
+let editandoId = null; // Almacena el ID si estamos en modo edición
 
 // 2. MANEJO DE NAVEGACIÓN Y CARGA DE DATOS
 let graficaCargada = false;
@@ -54,9 +55,12 @@ async function cargarArticulosDesdeNube(categoria) {
             const item = document.createElement('div');
             item.className = 'articulo-item';
             
-            // Botón de eliminar: Solo se genera si el estado de administrador es activo
+            // Controles administrativos: Ahora incluye botón de Editar
             const controlAdmin = adminLogueado 
-                ? `<button onclick="borrarArticulo('${art.id}')" style="background:none; border:none; color: #e74c3c; cursor:pointer; font-size: 13px; font-weight:bold;">🗑️ Eliminar</button>` 
+                ? `<div style="margin-top: 10px; display: flex; gap: 15px;">
+                    <button onclick='prepararEdicion(${JSON.stringify(art).replace(/'/g, "&apos;")})' style="background:none; border:none; color: var(--azul-medio); cursor:pointer; font-size: 13px; font-weight:bold;">✏️ Editar</button>
+                    <button onclick="borrarArticulo('${art.id}', '${categoria}')" style="background:none; border:none; color: #e74c3c; cursor:pointer; font-size: 13px; font-weight:bold;">🗑️ Eliminar</button>
+                   </div>` 
                 : '';
 
             item.innerHTML = `
@@ -75,39 +79,87 @@ async function cargarArticulosDesdeNube(categoria) {
     }
 }
 
-// 3. LÓGICA DEL FORMULARIO DE SUBIDA (ADMIN)
+// Función para cargar datos en el formulario y entrar en modo edición
+function prepararEdicion(art) {
+    editandoId = art.id;
+    document.getElementById('titulo').value = art.titulo;
+    document.getElementById('autores').value = art.autores;
+    document.getElementById('anio').value = art.anio;
+    document.getElementById('categoria').value = art.categoria;
+    
+    // Cambiar visualmente el botón para indicar edición
+    const btnSubir = document.querySelector('#formArticulo .btn-subir');
+    if(btnSubir) {
+        btnSubir.innerText = "Actualizar Registro";
+        btnSubir.style.background = "var(--azul-medio)";
+    }
+    
+    mostrarSeccion('seccion-subir');
+}
+
+// 3. LÓGICA DEL FORMULARIO DE SUBIDA / EDICIÓN (ADMIN)
 const formArticulo = document.getElementById('formArticulo');
 if (formArticulo) {
     formArticulo.addEventListener('submit', async function(e) {
         e.preventDefault();
+        
+        const categoriaSeleccionada = document.getElementById('categoria').value;
         const archivoPDF = document.getElementById('archivo').files[0];
-        if (!archivoPDF) return alert("Selecciona un archivo PDF");
-
-        const regexInvalido = /[^a-zA-Z0-9.\-_ ]/g; 
-        if (regexInvalido.test(archivoPDF.name)) {
-            return alert("Error: El nombre del archivo contiene caracteres no permitidos.");
-        }
-
-        const nombreArchivo = `${Date.now()}_${archivoPDF.name.replace(/\s+/g, '_')}`;
+        let urlArchivo = null;
 
         try {
-            const { error: uploadError } = await _supabase.storage.from('pdfs').upload(nombreArchivo, archivoPDF);
-            if (uploadError) throw uploadError;
+            // Si hay un archivo seleccionado, se sube (necesario para nuevos, opcional para editar)
+            if (archivoPDF) {
+                const regexInvalido = /[^a-zA-Z0-9.\-_ ]/g; 
+                if (regexInvalido.test(archivoPDF.name)) {
+                    return alert("Error: El nombre del archivo contiene caracteres no permitidos.");
+                }
+                const nombreArchivo = `${Date.now()}_${archivoPDF.name.replace(/\s+/g, '_')}`;
+                const { error: uploadError } = await _supabase.storage.from('pdfs').upload(nombreArchivo, archivoPDF);
+                if (uploadError) throw uploadError;
+                const { data: { publicUrl } } = _supabase.storage.from('pdfs').getPublicUrl(nombreArchivo);
+                urlArchivo = publicUrl;
+            }
 
-            const { data: { publicUrl } } = _supabase.storage.from('pdfs').getPublicUrl(nombreArchivo);
-
-            const { error: dbError } = await _supabase.from('articulos').insert([{
+            const datosArticulo = {
                 titulo: document.getElementById('titulo').value,
                 autores: document.getElementById('autores').value,
                 anio: parseInt(document.getElementById('anio').value),
-                categoria: document.getElementById('categoria').value,
-                pdf_url: publicUrl
-            }]);
+                categoria: categoriaSeleccionada
+            };
 
-            if (dbError) throw dbError;
-            alert("Artículo guardado correctamente.");
+            // Solo actualizamos la URL si se subió un archivo nuevo
+            if (urlArchivo) {
+                datosArticulo.pdf_url = urlArchivo;
+            }
+
+            if (editandoId) {
+                // MODO ACTUALIZAR
+                const { error: dbError } = await _supabase.from('articulos').update(datosArticulo).eq('id', editandoId);
+                if (dbError) throw dbError;
+                alert("Registro actualizado con éxito.");
+            } else {
+                // MODO INSERTAR NUEVO
+                if (!archivoPDF) return alert("Selecciona un archivo PDF para el nuevo registro.");
+                datosArticulo.pdf_url = urlArchivo;
+                const { error: dbError } = await _supabase.from('articulos').insert([datosArticulo]);
+                if (dbError) throw dbError;
+                alert("Artículo guardado correctamente.");
+            }
+
+            // Limpieza de estado y retorno a la sección de trabajo
             this.reset();
-            mostrarSeccion('home');
+            editandoId = null;
+            const btnSubir = document.querySelector('#formArticulo .btn-subir');
+            if(btnSubir) {
+                btnSubir.innerText = "Guardar";
+                btnSubir.style.background = "var(--verde-acento)";
+            }
+            
+            // Permanecer en la sección de la categoría cargada
+            cargarArticulosDesdeNube(categoriaSeleccionada);
+            mostrarSeccion(categoriaSeleccionada);
+
         } catch (err) { alert("Error: " + err.message); }
     });
 }
@@ -119,7 +171,7 @@ function verificarAdmin() {
     const user = document.getElementById('admin-user').value;
     const pass = document.getElementById('admin-pass').value;
     if (user === CREDENCIALES_ADMIN.usuario && pass === CREDENCIALES_ADMIN.pass) {
-        adminLogueado = true; // Activa permisos de edición en la sesión actual
+        adminLogueado = true; 
         document.getElementById('nav-subir').style.display = 'block';
         document.getElementById('nav-login').style.display = 'none';
         alert("Acceso administrativo concedido.");
@@ -134,7 +186,7 @@ function verificarAdmin() {
 }
 
 // FUNCIÓN PARA ELIMINAR REGISTROS
-async function borrarArticulo(id) {
+async function borrarArticulo(id, categoria) {
     if (!confirm("¿Confirmas la eliminación permanente de este registro?")) return;
 
     try {
@@ -145,7 +197,9 @@ async function borrarArticulo(id) {
 
         if (error) throw error;
         alert("Registro eliminado.");
-        location.reload(); 
+        
+        // Refrescamos solo la categoría actual para no salir de la vista
+        cargarArticulosDesdeNube(categoria);
     } catch (err) {
         alert("Error al intentar eliminar: " + err.message);
     }
