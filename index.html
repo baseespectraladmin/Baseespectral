@@ -6,8 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
-    
-    
 </head>
 <body>
 
@@ -101,20 +99,43 @@
         <form id="formArticulo">
             <label>Título:</label>
             <input type="text" id="titulo" required placeholder="Título del trabajo">
+            
             <label>Autores:</label>
             <input type="text" id="autores" required placeholder="Autores">
-            <label>Año y Categoría:</label>
-            <div style="display: flex; gap: 10px;">
-                <input type="number" id="anio" required placeholder="2026" style="flex:1">
-                <select id="categoria" required style="flex:2">
-                    <option value="art-investigacion">Artículos de Investigación</option>
-                    <option value="art-difusion">Artículos de Difusión</option>
-                    <option value="art-referencias">Artículos de Referencias</option>
-                    <option value="ref-agricola">Reflexión Agrícola</option>
+            
+            <label>Año y Categoría del Archivo:</label>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <input type="number" id="anio" required placeholder="2026" style="flex:1; padding: 10px; border-radius: 8px;">
+                <select id="categoria" required style="flex:2; padding: 10px; border-radius: 8px;">
+                    <optgroup label="Artículos Principales">
+                        <option value="art-investigacion">Artículos de Investigación</option>
+                        <option value="art-difusion">Artículos de Difusión</option>
+                        <option value="art-referencias">Artículos de Referencias</option>
+                    </optgroup>
+                    <optgroup label="Reflexión Difusa">
+                        <option value="ref-agricola">Reflexión Agrícola</option>
+                        <option value="ref-aplicada">Reflexión Aplicada</option>
+                        <option value="ref-simulada">Reflexión Simulada</option>
+                    </optgroup>
+                    <optgroup label="Fluorescencia Médica">
+                        <option value="fluo-medica">F. Médica (General)</option>
+                        <option value="fluo-med-aplicada">F. Médica Aplicada</option>
+                        <option value="fluo-med-simulada">F. Médica Simulada</option>
+                    </optgroup>
+                    <optgroup label="Fluorescencia Agrícola">
+                        <option value="fluo-agricola">F. Agrícola (General)</option>
+                        <option value="fluo-agri-aplicada">F. Agrícola Aplicada</option>
+                        <option value="fluo-agri-simulada">F. Agrícola Simulada</option>
+                    </optgroup>
+                    <optgroup label="Otros Espectros">
+                        <option value="espectros-absorbancia">Espectros de Absorbancia</option>
+                    </optgroup>
                 </select>
             </div>
+            
             <label>Archivo (PDF):</label>
             <input type="file" id="archivo" accept=".pdf" required>
+            
             <button type="submit" class="btn-subir">Guardar</button>
         </form>
     </div>
@@ -183,6 +204,7 @@
 <div id="fluo-agri-simulada" class="seccion-contenido container">
     <h1 class="titulo-seccion">Fluorescencia Agrícola Simulada</h1><hr><div id="lista-fluo-agri-simulada" class="lista-container"></div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/app.js"></script>
 </body>
