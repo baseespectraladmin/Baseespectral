@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Base espectral - Base de Datos</title>
+    <title>Base espectral - Universidad Politécnica de Tulancingo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
@@ -36,8 +36,8 @@
                     <a class="nav-link">Reflexión Difusa ▾</a>
                     <div class="dropdown">
                         <a onclick="mostrarSeccion('ref-agricola'); toggleMenu()">Reflexión Difusa</a>
-                        <a onclick="mostrarSeccion('ref-aplicada'); toggleMenu()">Reflexión Difusa agrícola aplicada</a>
-                        <a onclick="mostrarSeccion('ref-simulada'); toggleMenu()">Reflexión Difusa agrícola simulada</a>
+                        <a onclick="mostrarSeccion('ref-aplicada'); toggleMenu()">Reflexión Difusa aplicada</a>
+                        <a onclick="mostrarSeccion('ref-simulada'); toggleMenu()">Reflexión Difusa simulada</a>
                     </div>
                 </li>
                 <li class="has-dropdown">
@@ -54,7 +54,7 @@
                 </li>
                 <li><a onclick="mostrarSeccion('seccion-login'); toggleMenu()" id="nav-login">Admin Login</a></li>
                 <li id="nav-subir" style="display: none;">
-                    <a onclick="mostrarSeccion('seccion-subir'); toggleMenu()" style="color: var(--verde-acento);">+ Subir</a>
+                    <a onclick="mostrarSeccion('seccion-subir'); toggleMenu()" style="color: var(--verde-acento);">+ Gestión</a>
                 </li>
             </ul>
         </nav>
@@ -98,9 +98,9 @@
 
 <div id="seccion-subir" class="seccion-contenido container">
     <div class="form-subida">
-        <h2 id="titulo-form">Subir Nuevo Artículo</h2>
+        <h2 id="titulo-form">Gestión de Contenido</h2>
         <form id="formArticulo">
-            <label>Título:</label>
+            <label>Título del trabajo:</label>
             <input type="text" id="titulo" required placeholder="Título del trabajo">
             
             <label>Autores:</label>
@@ -115,14 +115,12 @@
                 </optgroup>
                 <optgroup label="Reflexión">
                     <option value="ref-agricola">Reflexión Difusa</option>
-                    <option value="ref-aplicada">Reflexión Difusa Agrícola Aplicada</option>
-                    <option value="ref-simulada">Reflexión Difusa Agrícola Simulada</option>
+                    <option value="ref-aplicada">Reflexión Difusa Aplicada</option>
+                    <option value="ref-simulada">Reflexión Difusa Simulada</option>
                 </optgroup>
-                <optgroup label="Fluorescencia Médica">
+                <optgroup label="Fluorescencia">
                     <option value="fluo-med-aplicada">F. Médica Aplicada</option>
                     <option value="fluo-med-simulada">F. Médica Simulada</option>
-                </optgroup>
-                <optgroup label="Fluorescencia Agrícola">
                     <option value="fluo-agri-aplicada">F. Agrícola Aplicada</option>
                     <option value="fluo-agri-simulada">F. Agrícola Simulada</option>
                 </optgroup>
@@ -132,10 +130,10 @@
             <input type="number" id="anio" required placeholder="2026" style="margin-bottom: 15px;">
 
             <div id="contenedor-fecha-difusion" style="display: none; margin-bottom: 15px;">
-                <label>Mes y Día (Opcional):</label>
+                <label>Día y Mes (Opcional):</label>
                 <div style="display: flex; gap: 10px;">
-                    <input type="number" id="mes" placeholder="Mes (1-12)" min="1" max="12" style="flex:1;">
-                    <input type="number" id="dia" placeholder="Día (1-31)" min="1" max="31" style="flex:1;">
+                    <input type="number" id="dia" placeholder="Día" min="1" max="31" style="flex:1;">
+                    <input type="number" id="mes" placeholder="Mes" min="1" max="12" style="flex:1;">
                 </div>
             </div>
 
@@ -154,10 +152,7 @@
     </div>
 </div>
 
-<div id="espectros-absorbancia" class="seccion-contenido container">
-    <h1>Espectros de Absorbancia</h1><hr>
-    <div id="lista-espectros-absorbancia" class="lista-container"></div>
-</div>
+<div id="espectros-absorbancia" class="seccion-contenido container"><h1>Absorbancia</h1><hr><div id="lista-espectros-absorbancia" class="lista-container"></div></div>
 
 <div id="espectros-reflexion" class="seccion-contenido container">
     <h1>Espectros de Reflexión Difusa</h1><hr>
@@ -184,8 +179,8 @@
 <div id="art-referencias" class="seccion-contenido container"><h1>Artículos de Referencias</h1><hr><div id="lista-art-referencias" class="lista-container"></div></div>
 
 <div id="ref-agricola" class="seccion-contenido container"><h1>Reflexión Difusa</h1><hr><div id="lista-ref-agricola" class="lista-container"></div></div>
-<div id="ref-aplicada" class="seccion-contenido container"><h1>Reflexión Difusa Agrícola Aplicada</h1><hr><div id="lista-ref-aplicada" class="lista-container"></div></div>
-<div id="ref-simulada" class="seccion-contenido container"><h1>Reflexión Difusa Agrícola Simulada</h1><hr><div id="lista-ref-simulada" class="lista-container"></div></div>
+<div id="ref-aplicada" class="seccion-contenido container"><h1>Reflexión Aplicada</h1><hr><div id="lista-ref-aplicada" class="lista-container"></div></div>
+<div id="ref-simulada" class="seccion-contenido container"><h1>Reflexión Simulada</h1><hr><div id="lista-ref-simulada" class="lista-container"></div></div>
 
 <div id="fluo-med-aplicada" class="seccion-contenido container"><h1>Fluorescencia Médica Aplicada</h1><hr><div id="lista-fluo-med-aplicada" class="lista-container"></div></div>
 <div id="fluo-med-simulada" class="seccion-contenido container"><h1>Fluorescencia Médica Simulada</h1><hr><div id="lista-fluo-med-simulada" class="lista-container"></div></div>

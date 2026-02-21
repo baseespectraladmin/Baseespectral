@@ -1,130 +1,216 @@
-// --- FUNCIÓN: Controla la visibilidad de campos según categoría ---
-function ajustarTipoEntrada() {
-    const categoria = document.getElementById('categoria').value;
-    const contenedorPdf = document.getElementById('contenedor-pdf');
-    const contenedorUrl = document.getElementById('contenedor-url');
-    const contenedorFecha = document.getElementById('contenedor-fecha-difusion');
+/* =========================================
+   1. CONFIGURACIÓN Y ESTADO GLOBAL
+   ========================================= */
+const SUPABASE_URL = "https://nxktvjduooqfgzzrdfot.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54a3R2amR1b29xZmd6enJkZm90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMTg1ODgsImV4cCI6MjA4NjY5NDU4OH0.4hYin09mna34MYg3cGdjtzIyvmZOntE5Xceofa9yTAs";
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    if (categoria === 'art-difusion') {
-        // Modo Difusión: Mostramos URL y Fecha extra, ocultamos PDF
-        if(contenedorPdf) contenedorPdf.style.display = 'none';
-        if(contenedorUrl) contenedorUrl.style.display = 'block';
-        if(contenedorFecha) contenedorFecha.style.display = 'block';
-    } else {
-        // Modo Estándar: Mostramos PDF, ocultamos el resto
-        if(contenedorPdf) contenedorPdf.style.display = 'block';
-        if(contenedorUrl) contenedorUrl.style.display = 'none';
-        if(contenedorFecha) contenedorFecha.style.display = 'none';
-        // Limpiamos los valores de mes/dia si no es difusión
-        document.getElementById('mes').value = "";
+const CREDENCIALES_ADMIN = { usuario: "missas", pass: "123" };
+let adminLogueado = false; 
+let editandoId = null; 
+let graficaCargada = false;
+
+/* =========================================
+   2. NAVEGACIÓN Y CONTROL DE VISTA
+   ========================================= */
+
+function mostrarSeccion(id) {
+    const secciones = document.querySelectorAll('.seccion-contenido');
+    secciones.forEach(s => s.classList.remove('seccion-activa'));
+
+    const seccionSeleccionada = document.getElementById(id);
+    if (seccionSeleccionada) {
+        seccionSeleccionada.classList.add('seccion-activa');
+        window.scrollTo(0, 0);
+
+        const listaContenedor = document.getElementById('lista-' + id);
+        if (listaContenedor) cargarArticulosDesdeNube(id);
+    }
+
+    if (id === 'espectros-reflexion' && !graficaCargada) inicializarGrafica();
+}
+
+// Controla qué campos se ven en el formulario según la categoría
+function ajustarTipoEntrada() {
+    const cat = document.getElementById('categoria').value;
+    const isDifusion = (cat === 'art-difusion');
+
+    document.getElementById('contenedor-fecha-difusion').style.display = isDifusion ? 'block' : 'none';
+    document.getElementById('contenedor-pdf').style.display = isDifusion ? 'none' : 'block';
+    document.getElementById('contenedor-url').style.display = isDifusion ? 'block' : 'none';
+
+    if (!isDifusion) {
         document.getElementById('dia').value = "";
+        document.getElementById('mes').value = "";
     }
 }
 
-// --- FUNCIÓN: Carga y muestra los artículos (Modificada para mostrar fecha completa) ---
+/* =========================================
+   3. GESTIÓN DE DATOS (LECTURA)
+   ========================================= */
+
 async function cargarArticulosDesdeNube(categoria) {
     const contenedor = document.getElementById('lista-' + categoria);
     if (!contenedor) return;
-    contenedor.innerHTML = '<p style="color: var(--gris); padding: 20px;">Consultando Base de Datos...</p>';
+
+    contenedor.innerHTML = '<p style="padding: 20px; color: var(--gris);">Consultando base de datos...</p>';
 
     try {
         const { data, error } = await _supabase.from('articulos').select('*').eq('categoria', categoria).order('anio', { ascending: true }); 
         if (error) throw error;
-        contenedor.innerHTML = data.length === 0 ? '<p style="padding: 20px;">No hay registros.</p>' : '';
+
+        contenedor.innerHTML = data.length === 0 ? '<p style="padding: 20px;">Sin registros disponibles.</p>' : '';
 
         data.forEach(art => {
             const item = document.createElement('div');
             item.className = 'articulo-item';
             
-            // Construcción de la fecha: Muestra Día/Mes/Año solo si existen
-            let formatoFecha = `${art.anio}`;
-            if (art.mes) formatoFecha = `${art.mes}/${formatoFecha}`;
-            if (art.dia && art.mes) formatoFecha = `${art.dia}/${formatoFecha}`;
+            // Formateo de fecha: Día/Mes/Año
+            let fechaDisplay = `${art.anio}`;
+            if (art.mes) fechaDisplay = `${art.mes}/${fechaDisplay}`;
+            if (art.dia && art.mes) fechaDisplay = `${art.dia}/${fechaDisplay}`;
 
-            const esDifusion = art.categoria === 'art-difusion';
-            const etiqueta = esDifusion ? '🔗 Ver Artículo' : '📄 Ver PDF';
-
-            const controlAdmin = adminLogueado ? `
-                <div style="margin-top: 10px; display: flex; gap: 15px;">
-                    <button onclick='prepararEdicion(${JSON.stringify(art).replace(/'/g, "&apos;")})' style="background:none; border:none; color: var(--azul-medio); cursor:pointer; font-size: 13px; font-weight:bold;">✏️ Editar</button>
-                    <button onclick="borrarArticulo('${art.id}', '${categoria}')" style="background:none; border:none; color: #e74c3c; cursor:pointer; font-size: 13px; font-weight:bold;">🗑️ Eliminar</button>
-                </div>` : '';
+            const icono = art.categoria === 'art-difusion' ? '🔗' : '📄';
 
             item.innerHTML = `
                 <h3>${art.titulo}</h3>
-                <p><strong>Autores:</strong> ${art.autores} | <strong>Fecha:</strong> ${formatoFecha}</p>
-                <div style="margin-top: 5px; display: flex; gap: 20px; align-items: center;">
-                    <a href="${art.pdf_url}" target="_blank" style="color: var(--azul-medio); font-weight: bold; text-decoration: none;">${etiqueta}</a>
-                    ${controlAdmin}
+                <p><strong>Autores:</strong> ${art.autores} | <strong>Fecha:</strong> ${fechaDisplay}</p>
+                <div style="margin-top: 10px; display: flex; gap: 20px; align-items: center;">
+                    <a href="${art.pdf_url}" target="_blank" style="color: var(--azul-medio); font-weight: bold; text-decoration: none;">${icono} Ver Contenido</a>
+                    ${adminLogueado ? `
+                        <button onclick='prepararEdicion(${JSON.stringify(art).replace(/'/g, "&apos;")})' style="border:none; background:none; color: var(--azul-medio); cursor:pointer; font-weight:bold;">✏️ Editar</button>
+                        <button onclick="borrarArticulo('${art.id}', '${categoria}')" style="border:none; background:none; color: #e74c3c; cursor:pointer; font-weight:bold;">🗑️ Eliminar</button>
+                    ` : ''}
                 </div>
             `;
             contenedor.appendChild(item);
         });
-    } catch (err) { contenedor.innerHTML = '<p style="color: red;">Error de conexión.</p>'; }
+    } catch (err) { contenedor.innerHTML = '<p style="color:red; padding: 20px;">Error de conexión.</p>'; }
 }
 
-// --- EVENTO: Guardar / Editar (Maneja el envío a Supabase) ---
-formArticulo.addEventListener('submit', async function(e) {
+/* =========================================
+   4. ACCIONES ADMINISTRATIVAS (CRUD)
+   ========================================= */
+
+// Guardar o Actualizar
+document.getElementById('formArticulo').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const categoriaSel = document.getElementById('categoria').value;
-    const archivoPDF = document.getElementById('archivo').files[0];
-    const urlExterna = document.getElementById('enlace_externo').value;
-    let urlFinal = null;
+    const cat = document.getElementById('categoria').value;
+    const file = document.getElementById('archivo').files[0];
+    const urlExt = document.getElementById('enlace_externo').value;
+    let urlPublica = null;
 
     try {
-        // Lógica de archivos/links
-        if (categoriaSel === 'art-difusion') {
-            if (!urlExterna && !editandoId) throw new Error("Falta la URL.");
-            urlFinal = urlExterna;
-        } else if (archivoPDF) {
-            const nombre = `${Date.now()}_${archivoPDF.name.replace(/\s+/g, '_')}`;
-            const { error: upErr } = await _supabase.storage.from('pdfs').upload(nombre, archivoPDF);
+        // Manejo de archivo vs URL
+        if (cat !== 'art-difusion' && file) {
+            const path = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+            const { error: upErr } = await _supabase.storage.from('pdfs').upload(path, file);
             if (upErr) throw upErr;
-            const { data: { publicUrl } } = _supabase.storage.from('pdfs').getPublicUrl(nombre);
-            urlFinal = publicUrl;
+            urlPublica = _supabase.storage.from('pdfs').getPublicUrl(path).data.publicUrl;
+        } else if (cat === 'art-difusion') {
+            urlPublica = urlExt;
         }
 
-        // Construcción del objeto para la base de datos
-        const datosArticulo = {
+        const payload = {
             titulo: document.getElementById('titulo').value,
             autores: document.getElementById('autores').value,
             anio: parseInt(document.getElementById('anio').value),
-            mes: document.getElementById('mes').value ? parseInt(document.getElementById('mes').value) : null,
             dia: document.getElementById('dia').value ? parseInt(document.getElementById('dia').value) : null,
-            categoria: categoriaSel
+            mes: document.getElementById('mes').value ? parseInt(document.getElementById('mes').value) : null,
+            categoria: cat
         };
-        if (urlFinal) datosArticulo.pdf_url = urlFinal;
+        if (urlPublica) payload.pdf_url = urlPublica;
 
         if (editandoId) {
-            await _supabase.from('articulos').update(datosArticulo).eq('id', editandoId);
+            const { error } = await _supabase.from('articulos').update(payload).eq('id', editandoId);
+            if (error) throw error;
             alert("Registro actualizado.");
         } else {
-            await _supabase.from('articulos').insert([datosArticulo]);
+            const { error } = await _supabase.from('articulos').insert([payload]);
+            if (error) throw error;
             alert("Guardado con éxito.");
         }
 
         this.reset();
         editandoId = null;
-        ajustarTipoEntrada(); // Resetea la vista del formulario
-        cargarArticulosDesdeNube(categoriaSel);
-        mostrarSeccion(categoriaSel);
-    } catch (err) { alert(err.message); }
+        document.querySelector('.btn-subir').innerText = "Guardar en Base espectral";
+        ajustarTipoEntrada();
+        mostrarSeccion(cat); // Te mantiene en la sección actual
+    } catch (err) { alert("Error: " + err.message); }
 });
 
-// --- FUNCIÓN: Preparar Edición (Carga datos al formulario) ---
 function prepararEdicion(art) {
     editandoId = art.id;
     document.getElementById('titulo').value = art.titulo;
     document.getElementById('autores').value = art.autores;
     document.getElementById('anio').value = art.anio;
-    document.getElementById('mes').value = art.mes || "";
     document.getElementById('dia').value = art.dia || "";
+    document.getElementById('mes').value = art.mes || "";
     document.getElementById('categoria').value = art.categoria;
     
-    ajustarTipoEntrada(); // Muestra/oculta campos según la categoría del artículo a editar
+    ajustarTipoEntrada();
     if (art.categoria === 'art-difusion') document.getElementById('enlace_externo').value = art.pdf_url;
-
-    const btn = document.querySelector('#formArticulo .btn-subir');
-    if(btn) btn.innerText = "Actualizar Registro";
+    
+    document.querySelector('.btn-subir').innerText = "Actualizar Registro";
     mostrarSeccion('seccion-subir');
+}
+
+async function borrarArticulo(id, cat) {
+    if (confirm("¿Eliminar permanentemente este registro?")) {
+        try {
+            const { error } = await _supabase.from('articulos').delete().eq('id', id);
+            if (error) throw error;
+            cargarArticulosDesdeNube(cat);
+        } catch (err) { alert(err.message); }
+    }
+}
+
+function verificarAdmin() {
+    const u = document.getElementById('admin-user').value;
+    const p = document.getElementById('admin-pass').value;
+    if (u === CREDENCIALES_ADMIN.usuario && p === CREDENCIALES_ADMIN.pass) {
+        adminLogueado = true;
+        document.getElementById('nav-subir').style.display = 'block';
+        document.getElementById('nav-login').style.display = 'none';
+        alert("Modo administrador activo.");
+        mostrarSeccion('home');
+    } else { alert("Credenciales incorrectas."); }
+}
+
+/* =========================================
+   5. GRÁFICA Y MENÚ MÓVIL
+   ========================================= */
+
+async function inicializarGrafica() {
+    const gd = document.getElementById('grafica-reflexion');
+    if (!gd) return;
+
+    try {
+        const resp = await fetch('css/data/reflexion.csv');
+        const texto = await resp.text();
+        const filas = texto.trim().split('\n').filter(l => l.trim() !== '');
+        const wavelength = [], reflectancia = [];
+        
+        filas.slice(1).forEach(l => {
+            const cols = l.split(/,|\t|;/).map(s => s.trim());
+            const w = parseFloat(cols[0]), r = parseFloat(cols[1]);
+            if (!isNaN(w) && !isNaN(r)) { wavelength.push(w); reflectancia.push(r); }
+        });
+
+        const trace = { x: wavelength, y: reflectancia, mode: 'lines', line: { color: '#3282b8', width: 2.5 } };
+        const layout = { 
+            title: '<b>Espectro de Reflexión Difusa - UPT</b>',
+            xaxis: { title: 'Longitud de onda (nm)', range: [400, 800] },
+            yaxis: { title: 'Reflexión (%)', range: [0, 100] },
+            margin: { l: 60, r: 30, t: 80, b: 60 }
+        };
+
+        Plotly.newPlot(gd, [trace], layout, { responsive: true });
+        graficaCargada = true;
+    } catch (e) { console.error("Error gráfica:", e); }
+}
+
+function toggleMenu() {
+    const nav = document.getElementById('nav-menu');
+    if (window.innerWidth <= 768) nav.classList.toggle('nav-active');
 }
