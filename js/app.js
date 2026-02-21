@@ -105,7 +105,7 @@ async function cargarArticulosDesdeNube(categoria) {
                 <h3>${art.titulo}</h3>
                 <p><strong>Autores:</strong> ${art.autores} | <strong>Publicado en:</strong> ${fechaTexto}</p>
                 <div style="margin-top: 10px; display: flex; gap: 20px; align-items: center;">
-                    <a href="${art.pdf_url}" target="_blank" style="color: var(--azul-medio); font-weight: bold; text-decoration: none;">${icono} Ver contenido</a>
+                    <a href="${art.pdf_url}" target="_blank" style="color: var(--azul-medio); font-weight: bold; text-decoration: none;">${icono} Ver artículo</a>
                     ${adminLogueado ? `
                         <button onclick='prepararEdicion(${JSON.stringify(art).replace(/'/g, "&apos;")})' style="border:none; background:none; color: var(--azul-medio); cursor:pointer; font-weight:bold;">✏️ Editar</button>
                         <button onclick="borrarArticulo('${art.id}', '${categoria}')" style="border:none; background:none; color: #e74c3c; cursor:pointer; font-weight:bold;">🗑️ Borrar</button>
