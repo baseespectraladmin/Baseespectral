@@ -1,15 +1,18 @@
-// 1. CONFIGURACIÓN E INICIO (Mantenemos tus llaves de Supabase)
+// 1. CONFIGURACIÓN DE CONEXIÓN A SUPABASE
 const SUPABASE_URL = "https://nxktvjduooqfgzzrdfot.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54a3R2amR1b29xZmd6enJkZm90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMTg1ODgsImV4cCI6MjA4NjY5NDU4OH0.4hYin09mna34MYg3cGdjtzIyvmZOntE5Xceofa9yTAs";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Variables de estado administrativo
 let adminLogueado = false; 
 let editandoId = null; 
 
+// --- NUEVA FUNCIÓN: Intercambia entre campo PDF y campo URL ---
 function ajustarTipoEntrada() {
     const categoria = document.getElementById('categoria').value;
     const contenedorPdf = document.getElementById('contenedor-pdf');
     const contenedorUrl = document.getElementById('contenedor-url');
+
     if (categoria === 'art-difusion') {
         if(contenedorPdf) contenedorPdf.style.display = 'none';
         if(contenedorUrl) contenedorUrl.style.display = 'block';
@@ -19,38 +22,68 @@ function ajustarTipoEntrada() {
     }
 }
 
-// 2. CARGA DE DATOS CON FECHA DETALLADA
+// 2. MANEJO DE NAVEGACIÓN Y CARGA DE DATOS
+let graficaCargada = false;
+
+function mostrarSeccion(id) {
+    const secciones = document.querySelectorAll('.seccion-contenido');
+    secciones.forEach(s => s.classList.remove('seccion-activa'));
+
+    const seccionSeleccionada = document.getElementById(id);
+    if (seccionSeleccionada) {
+        seccionSeleccionada.classList.add('seccion-activa');
+        window.scrollTo(0, 0);
+
+        const listaContenedor = document.getElementById('lista-' + id);
+        if (listaContenedor) {
+            cargarArticulosDesdeNube(id);
+        }
+    }
+
+    if (id === 'espectros-reflexion' && !graficaCargada) {
+        inicializarGrafica();
+    }
+}
+
 async function cargarArticulosDesdeNube(categoria) {
     const contenedor = document.getElementById('lista-' + categoria);
     if (!contenedor) return;
+
     contenedor.innerHTML = '<p style="color: var(--gris); padding: 20px;">Consultando Base de Datos Espectral...</p>';
 
     try {
-        const { data, error } = await _supabase.from('articulos').select('*').eq('categoria', categoria).order('anio', { ascending: true }); 
-        if (error) throw error;
-        contenedor.innerHTML = data.length === 0 ? '<p style="padding: 20px;">No hay registros.</p>' : '';
+        const { data, error } = await _supabase
+            .from('articulos') 
+            .select('*')
+            .eq('categoria', categoria)
+            .order('anio', { ascending: true }); 
 
+        if (error) throw error;
+
+        if (data.length === 0) {
+            contenedor.innerHTML = '<p style="color: var(--gris); padding: 20px;">No hay registros en esta categoría.</p>';
+            return;
+        }
+
+        contenedor.innerHTML = '';
         data.forEach(art => {
             const item = document.createElement('div');
             item.className = 'articulo-item';
             
-            // Construimos la fecha dinámica (Día/Mes/Año)
-            let fechaTexto = `${art.anio}`;
-            if (art.mes) fechaTexto = `${art.mes}/${fechaTexto}`;
-            if (art.dia && art.mes) fechaTexto = `${art.dia}/${fechaTexto}`;
-
+            // Ajuste visual: Si es difusión, mostramos icono de Link
             const esDifusion = art.categoria === 'art-difusion';
             const etiquetaEnlace = esDifusion ? '🔗 Ver Artículo Externo' : '📄 Ver Documento PDF';
 
-            const controlAdmin = adminLogueado ? `
-                <div style="margin-top: 10px; display: flex; gap: 15px;">
+            const controlAdmin = adminLogueado 
+                ? `<div style="margin-top: 10px; display: flex; gap: 15px;">
                     <button onclick='prepararEdicion(${JSON.stringify(art).replace(/'/g, "&apos;")})' style="background:none; border:none; color: var(--azul-medio); cursor:pointer; font-size: 13px; font-weight:bold;">✏️ Editar</button>
                     <button onclick="borrarArticulo('${art.id}', '${categoria}')" style="background:none; border:none; color: #e74c3c; cursor:pointer; font-size: 13px; font-weight:bold;">🗑️ Eliminar</button>
-                </div>` : '';
+                   </div>` 
+                : '';
 
             item.innerHTML = `
                 <h3>${art.titulo}</h3>
-                <p><strong>Autores:</strong> ${art.autores} | <strong>Publicado:</strong> ${fechaTexto}</p>
+                <p><strong>Autores:</strong> ${art.autores} | <strong>Año:</strong> ${art.anio}</p>
                 <div style="margin-top: 10px; display: flex; gap: 20px; align-items: center;">
                     <a href="${art.pdf_url}" target="_blank" style="color: var(--azul-medio); font-weight: bold; text-decoration: none;">${etiquetaEnlace}</a>
                     ${controlAdmin}
@@ -58,29 +91,60 @@ async function cargarArticulosDesdeNube(categoria) {
             `;
             contenedor.appendChild(item);
         });
-    } catch (err) { contenedor.innerHTML = '<p style="color: red;">Error de conexión.</p>'; }
+    } catch (err) {
+        console.error("Error de lectura:", err);
+        contenedor.innerHTML = '<p style="color: red; padding: 20px;">Error de conexión con el servidor.</p>';
+    }
 }
 
-// 3. LÓGICA DE GUARDADO (INSERT / UPDATE)
+function prepararEdicion(art) {
+    editandoId = art.id;
+    document.getElementById('titulo').value = art.titulo;
+    document.getElementById('autores').value = art.autores;
+    document.getElementById('anio').value = art.anio;
+    document.getElementById('categoria').value = art.categoria;
+    
+    // Si estamos editando un artículo de difusión, llenamos el campo de URL
+    ajustarTipoEntrada(); 
+    if (art.categoria === 'art-difusion') {
+        document.getElementById('enlace_externo').value = art.pdf_url;
+    }
+
+    const btnSubir = document.querySelector('#formArticulo .btn-subir');
+    if(btnSubir) {
+        btnSubir.innerText = "Actualizar Registro";
+        btnSubir.style.background = "var(--azul-medio)";
+    }
+    
+    mostrarSeccion('seccion-subir');
+}
+
+// 3. LÓGICA DEL FORMULARIO DE SUBIDA / EDICIÓN
 const formArticulo = document.getElementById('formArticulo');
 if (formArticulo) {
     formArticulo.addEventListener('submit', async function(e) {
         e.preventDefault();
+        
         const categoriaSeleccionada = document.getElementById('categoria').value;
         const archivoPDF = document.getElementById('archivo').files[0];
         const urlExterna = document.getElementById('enlace_externo').value;
-        const diaVal = document.getElementById('dia').value;
-        const mesVal = document.getElementById('mes').value;
         let urlFinal = null;
 
         try {
+            // Caso 1: Es un artículo de difusión (usa Link)
             if (categoriaSeleccionada === 'art-difusion') {
-                if (!urlExterna && !editandoId) throw new Error("Ingresa la URL.");
+                if (!urlExterna && !editandoId) throw new Error("Ingresa la URL del artículo.");
                 urlFinal = urlExterna;
-            } else if (archivoPDF) {
+            } 
+            // Caso 2: Es un PDF (se sube a Storage)
+            else if (archivoPDF) {
+                const regexInvalido = /[^a-zA-Z0-9.\-_ ]/g; 
+                if (regexInvalido.test(archivoPDF.name)) throw new Error("Nombre de archivo inválido.");
+                
                 const nombreArchivo = `${Date.now()}_${archivoPDF.name.replace(/\s+/g, '_')}`;
-                const { error: upErr } = await _supabase.storage.from('pdfs').upload(nombreArchivo, archivoPDF);
-                if (upErr) throw upErr;
+                const { error: uploadError } = await _supabase.storage.from('pdfs').upload(nombreArchivo, archivoPDF);
+                if (uploadError) throw uploadError;
+                
                 const { data: { publicUrl } } = _supabase.storage.from('pdfs').getPublicUrl(nombreArchivo);
                 urlFinal = publicUrl;
             }
@@ -89,24 +153,30 @@ if (formArticulo) {
                 titulo: document.getElementById('titulo').value,
                 autores: document.getElementById('autores').value,
                 anio: parseInt(document.getElementById('anio').value),
-                mes: mesVal ? parseInt(mesVal) : null, // Opcional
-                dia: diaVal ? parseInt(diaVal) : null, // Opcional
                 categoria: categoriaSeleccionada
             };
 
             if (urlFinal) datosArticulo.pdf_url = urlFinal;
 
             if (editandoId) {
-                await _supabase.from('articulos').update(datosArticulo).eq('id', editandoId);
+                const { error: dbError } = await _supabase.from('articulos').update(datosArticulo).eq('id', editandoId);
+                if (dbError) throw dbError;
                 alert("Registro actualizado.");
             } else {
-                if (!urlFinal) throw new Error("Falta archivo o URL.");
-                await _supabase.from('articulos').insert([datosArticulo]);
+                if (!urlFinal) throw new Error("Falta el archivo o la URL.");
+                const { error: dbError } = await _supabase.from('articulos').insert([datosArticulo]);
+                if (dbError) throw dbError;
                 alert("Guardado correctamente.");
             }
 
+            // Limpieza y refresco sin salir de la vista
             this.reset();
             editandoId = null;
+            const btnSubir = document.querySelector('#formArticulo .btn-subir');
+            if(btnSubir) {
+                btnSubir.innerText = "Guardar";
+                btnSubir.style.background = "var(--verde-acento)";
+            }
             ajustarTipoEntrada();
             cargarArticulosDesdeNube(categoriaSeleccionada);
             mostrarSeccion(categoriaSeleccionada);
@@ -115,25 +185,7 @@ if (formArticulo) {
     });
 }
 
-function prepararEdicion(art) {
-    editandoId = art.id;
-    document.getElementById('titulo').value = art.titulo;
-    document.getElementById('autores').value = art.autores;
-    document.getElementById('anio').value = art.anio;
-    document.getElementById('mes').value = art.mes || "";
-    document.getElementById('dia').value = art.dia || "";
-    document.getElementById('categoria').value = art.categoria;
-    
-    ajustarTipoEntrada(); 
-    if (art.categoria === 'art-difusion') {
-        document.getElementById('enlace_externo').value = art.pdf_url;
-    }
-    const btnSubir = document.querySelector('#formArticulo .btn-subir');
-    if(btnSubir) { btnSubir.innerText = "Actualizar Registro"; btnSubir.style.background = "var(--azul-medio)"; }
-    mostrarSeccion('seccion-subir');
-}
-
-// 4. RESTO DE FUNCIONES (ADMIN, GRÁFICA, ETC.) SE MANTIENEN IGUAL...
+// 4. ACCESO, BORRAR, GRÁFICA Y MENÚ (Mantenidos igual)
 const CREDENCIALES_ADMIN = { usuario: "missas", pass: "123" };
 
 function verificarAdmin() {
@@ -147,21 +199,11 @@ function verificarAdmin() {
         mostrarSeccion('home');
     } else {
         const errLog = document.getElementById('error-login');
-        if (errLog) { errLog.style.display = 'block'; errLog.innerText = "Credenciales incorrectas."; }
+        if (errLog) {
+            errLog.style.display = 'block';
+            errLog.innerText = "Credenciales incorrectas.";
+        }
     }
-}
-
-function mostrarSeccion(id) {
-    const secciones = document.querySelectorAll('.seccion-contenido');
-    secciones.forEach(s => s.classList.remove('seccion-activa'));
-    const seccionSeleccionada = document.getElementById(id);
-    if (seccionSeleccionada) {
-        seccionSeleccionada.classList.add('seccion-activa');
-        window.scrollTo(0, 0);
-        const listaContenedor = document.getElementById('lista-' + id);
-        if (listaContenedor) cargarArticulosDesdeNube(id);
-    }
-    if (id === 'espectros-reflexion' && !graficaCargada) inicializarGrafica();
 }
 
 async function borrarArticulo(id, categoria) {
@@ -222,6 +264,7 @@ async function inicializarGrafica() {
             const l = fullLayout.margin.l, t = fullLayout.margin.t;
             const plotW = rect.width - (l + fullLayout.margin.r), plotH = rect.height - (t + fullLayout.margin.b);
             const dataX = 400 + ((ev.clientX - rect.left - l) / plotW) * 400;
+
             if (dataX >= 400 && dataX <= 800) {
                 const yInterp = interpY(dataX);
                 Plotly.restyle(gd, { x: [[dataX]], y: [[yInterp]] }, [1]);
@@ -234,10 +277,12 @@ async function inicializarGrafica() {
                 }
             }
         });
-    } catch (e) { console.error("Error datos:", e); }
+    } catch (e) { console.error("Error datos espectrales:", e); }
 }
 
 function toggleMenu() {
     const nav = document.getElementById('nav-menu');
-    if (window.innerWidth <= 768) nav.classList.toggle('nav-active');
+    if (window.innerWidth <= 768) {
+        nav.classList.toggle('nav-active');
+    }
 }
