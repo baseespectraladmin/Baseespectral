@@ -1,5 +1,5 @@
 /* =========================================
-   1. CONFIGURACIÓN Y ESTADO GLOBAL
+   1. CONFIGURACIÓN Y CONEXIÓN
    ========================================= */
 const SUPABASE_URL = "https://nxktvjduooqfgzzrdfot.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54a3R2amR1b29xZmd6enJkZm90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMTg1ODgsImV4cCI6MjA4NjY5NDU4OH0.4hYin09mna34MYg3cGdjtzIyvmZOntE5Xceofa9yTAs";
@@ -30,23 +30,23 @@ function mostrarSeccion(id) {
     if (id === 'espectros-reflexion' && !graficaCargada) inicializarGrafica();
 }
 
-// Controla qué campos se ven en el formulario según la categoría
 function ajustarTipoEntrada() {
     const cat = document.getElementById('categoria').value;
-    const isDifusion = (cat === 'art-difusion');
+    const esDifusion = (cat === 'art-difusion');
 
-    document.getElementById('contenedor-fecha-difusion').style.display = isDifusion ? 'block' : 'none';
-    document.getElementById('contenedor-pdf').style.display = isDifusion ? 'none' : 'block';
-    document.getElementById('contenedor-url').style.display = isDifusion ? 'block' : 'none';
+    // Visibilidad de fecha y origen (PDF/URL)
+    document.getElementById('contenedor-fecha-difusion').style.display = esDifusion ? 'block' : 'none';
+    document.getElementById('contenedor-pdf').style.display = esDifusion ? 'none' : 'block';
+    document.getElementById('contenedor-url').style.display = esDifusion ? 'block' : 'none';
 
-    if (!isDifusion) {
+    if (!esDifusion) {
         document.getElementById('dia').value = "";
         document.getElementById('mes').value = "";
     }
 }
 
 /* =========================================
-   3. GESTIÓN DE DATOS (LECTURA)
+   3. GESTIÓN DE DATOS (READ)
    ========================================= */
 
 async function cargarArticulosDesdeNube(categoria) {
@@ -56,40 +56,45 @@ async function cargarArticulosDesdeNube(categoria) {
     contenedor.innerHTML = '<p style="padding: 20px; color: var(--gris);">Consultando base de datos...</p>';
 
     try {
-        const { data, error } = await _supabase.from('articulos').select('*').eq('categoria', categoria).order('anio', { ascending: true }); 
+        const { data, error } = await _supabase
+            .from('articulos') 
+            .select('*')
+            .eq('categoria', categoria)
+            .order('anio', { ascending: true }); 
+
         if (error) throw error;
 
-        contenedor.innerHTML = data.length === 0 ? '<p style="padding: 20px;">Sin registros disponibles.</p>' : '';
+        contenedor.innerHTML = data.length === 0 ? '<p style="padding: 20px;">Sin registros.</p>' : '';
 
         data.forEach(art => {
             const item = document.createElement('div');
             item.className = 'articulo-item';
             
-            // Formateo de fecha: Día/Mes/Año
-            let fechaDisplay = `${art.anio}`;
-            if (art.mes) fechaDisplay = `${art.mes}/${fechaDisplay}`;
-            if (art.dia && art.mes) fechaDisplay = `${art.dia}/${fechaDisplay}`;
+            // Lógica de visualización de fecha (D/M/A)
+            let fechaTexto = `${art.anio}`;
+            if (art.mes) fechaTexto = `${art.mes}/${fechaTexto}`;
+            if (art.dia && art.mes) fechaTexto = `${art.dia}/${fechaTexto}`;
 
             const icono = art.categoria === 'art-difusion' ? '🔗' : '📄';
 
             item.innerHTML = `
                 <h3>${art.titulo}</h3>
-                <p><strong>Autores:</strong> ${art.autores} | <strong>Fecha:</strong> ${fechaDisplay}</p>
+                <p><strong>Autores:</strong> ${art.autores} | <strong>Fecha:</strong> ${fechaTexto}</p>
                 <div style="margin-top: 10px; display: flex; gap: 20px; align-items: center;">
-                    <a href="${art.pdf_url}" target="_blank" style="color: var(--azul-medio); font-weight: bold; text-decoration: none;">${icono} Ver Contenido</a>
+                    <a href="${art.pdf_url}" target="_blank" style="color: var(--azul-medio); font-weight: bold; text-decoration: none;">${icono} Ver contenido</a>
                     ${adminLogueado ? `
                         <button onclick='prepararEdicion(${JSON.stringify(art).replace(/'/g, "&apos;")})' style="border:none; background:none; color: var(--azul-medio); cursor:pointer; font-weight:bold;">✏️ Editar</button>
-                        <button onclick="borrarArticulo('${art.id}', '${categoria}')" style="border:none; background:none; color: #e74c3c; cursor:pointer; font-weight:bold;">🗑️ Eliminar</button>
+                        <button onclick="borrarArticulo('${art.id}', '${categoria}')" style="border:none; background:none; color: #e74c3c; cursor:pointer; font-weight:bold;">🗑️ Borrar</button>
                     ` : ''}
                 </div>
             `;
             contenedor.appendChild(item);
         });
-    } catch (err) { contenedor.innerHTML = '<p style="color:red; padding: 20px;">Error de conexión.</p>'; }
+    } catch (err) { contenedor.innerHTML = '<p style="color:red; padding: 20px;">Error de servidor.</p>'; }
 }
 
 /* =========================================
-   4. ACCIONES ADMINISTRATIVAS (CRUD)
+   4. GESTIÓN DE DATOS (CUD)
    ========================================= */
 
 // Guardar o Actualizar
@@ -101,7 +106,7 @@ document.getElementById('formArticulo').addEventListener('submit', async functio
     let urlPublica = null;
 
     try {
-        // Manejo de archivo vs URL
+        // Subida de archivo (solo si hay archivo nuevo y no es difusión)
         if (cat !== 'art-difusion' && file) {
             const path = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
             const { error: upErr } = await _supabase.storage.from('pdfs').upload(path, file);
@@ -135,7 +140,7 @@ document.getElementById('formArticulo').addEventListener('submit', async functio
         editandoId = null;
         document.querySelector('.btn-subir').innerText = "Guardar en Base espectral";
         ajustarTipoEntrada();
-        mostrarSeccion(cat); // Te mantiene en la sección actual
+        mostrarSeccion(cat); // Permanecer en la sección
     } catch (err) { alert("Error: " + err.message); }
 });
 
@@ -156,33 +161,21 @@ function prepararEdicion(art) {
 }
 
 async function borrarArticulo(id, cat) {
-    if (confirm("¿Eliminar permanentemente este registro?")) {
-        try {
-            const { error } = await _supabase.from('articulos').delete().eq('id', id);
-            if (error) throw error;
-            cargarArticulosDesdeNube(cat);
-        } catch (err) { alert(err.message); }
+    if (confirm("¿Confirmas la eliminación permanente?")) {
+        await _supabase.from('articulos').delete().eq('id', id);
+        cargarArticulosDesdeNube(cat);
     }
 }
 
-function verificarAdmin() {
-    const u = document.getElementById('admin-user').value;
-    const p = document.getElementById('admin-pass').value;
-    if (u === CREDENCIALES_ADMIN.usuario && p === CREDENCIALES_ADMIN.pass) {
-        adminLogueado = true;
-        document.getElementById('nav-subir').style.display = 'block';
-        document.getElementById('nav-login').style.display = 'none';
-        alert("Modo administrador activo.");
-        mostrarSeccion('home');
-    } else { alert("Credenciales incorrectas."); }
-}
-
 /* =========================================
-   5. GRÁFICA Y MENÚ MÓVIL
+   5. GRÁFICA CON RADAR MATEMÁTICO
    ========================================= */
 
 async function inicializarGrafica() {
     const gd = document.getElementById('grafica-reflexion');
+    const tooltip = document.getElementById('custom-tooltip');
+    const lambdaSpan = document.getElementById('lambda-value');
+    const reflSpan = document.getElementById('refl-value');
     if (!gd) return;
 
     try {
@@ -197,17 +190,63 @@ async function inicializarGrafica() {
             if (!isNaN(w) && !isNaN(r)) { wavelength.push(w); reflectancia.push(r); }
         });
 
-        const trace = { x: wavelength, y: reflectancia, mode: 'lines', line: { color: '#3282b8', width: 2.5 } };
-        const layout = { 
+        const trace = { x: wavelength, y: reflectancia, mode: 'lines', line: { color: '#3282b8', width: 2.5, shape: 'spline' }, hoverinfo: 'none' };
+        const hoverTrace = { x: [0], y: [0], mode: 'markers', marker: { size: 12, color: '#006847', line: { width: 3, color: '#ffffff' } }, hoverinfo: 'none' };
+        const layout = {
             title: '<b>Espectro de Reflexión Difusa - UPT</b>',
-            xaxis: { title: 'Longitud de onda (nm)', range: [400, 800] },
-            yaxis: { title: 'Reflexión (%)', range: [0, 100] },
-            margin: { l: 60, r: 30, t: 80, b: 60 }
+            xaxis: { title: 'Longitud de onda (nm)', gridcolor: '#e2e8f0', range: [400, 800] },
+            yaxis: { title: 'Reflexión (%)', gridcolor: '#e2e8f0', range: [0, 100] },
+            paper_bgcolor: '#fcfdfe', plot_bgcolor: '#ffffff', hovermode: false, showlegend: false, margin: { l: 60, r: 30, t: 80, b: 60 }
         };
 
-        Plotly.newPlot(gd, [trace], layout, { responsive: true });
+        Plotly.newPlot(gd, [trace, hoverTrace], layout, { responsive: true, displayModeBar: false });
         graficaCargada = true;
-    } catch (e) { console.error("Error gráfica:", e); }
+
+        // Interpolación lineal para el radar
+        function interpY(x) {
+            if (x <= wavelength[0]) return reflectancia[0];
+            if (x >= wavelength[wavelength.length - 1]) return reflectancia[reflectancia.length - 1];
+            let i = 1; while (i < wavelength.length && x > wavelength[i]) i++;
+            const x1 = wavelength[i - 1], x2 = wavelength[i], y1 = reflectancia[i - 1], y2 = reflectancia[i];
+            return y1 + ((x - x1) / (x2 - x1)) * (y2 - y1);
+        }
+
+        gd.addEventListener('mousemove', (ev) => {
+            const rect = gd.getBoundingClientRect();
+            const fl = gd._fullLayout;
+            const l = fl.margin.l, t = fl.margin.t;
+            const plotW = rect.width - (l + fl.margin.r), plotH = rect.height - (t + fl.margin.b);
+            const dataX = 400 + ((ev.clientX - rect.left - l) / plotW) * 400;
+
+            if (dataX >= 400 && dataX <= 800) {
+                const yInterp = interpY(dataX);
+                Plotly.restyle(gd, { x: [[dataX]], y: [[yInterp]] }, [1]);
+                if(lambdaSpan) lambdaSpan.textContent = dataX.toFixed(2);
+                if(reflSpan) reflSpan.textContent = yInterp.toFixed(2);
+                if(tooltip) {
+                    tooltip.style.left = (l + ((dataX - 400) / 400) * plotW) + 'px';
+                    tooltip.style.top = (t + (1 - (yInterp / 100)) * plotH - 25) + 'px';
+                    tooltip.style.display = 'block';
+                }
+            }
+        });
+    } catch (e) { console.error("Error datos espectrales:", e); }
+}
+
+/* =========================================
+   6. APOYO (ADMIN Y MENÚ)
+   ========================================= */
+
+function verificarAdmin() {
+    const u = document.getElementById('admin-user').value;
+    const p = document.getElementById('admin-pass').value;
+    if (u === CREDENCIALES_ADMIN.usuario && p === CREDENCIALES_ADMIN.pass) {
+        adminLogueado = true;
+        document.getElementById('nav-subir').style.display = 'block';
+        document.getElementById('nav-login').style.display = 'none';
+        alert("Modo administrador activo.");
+        mostrarSeccion('home');
+    } else { alert("Error de acceso."); }
 }
 
 function toggleMenu() {
