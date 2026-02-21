@@ -98,16 +98,18 @@
 
 <div id="seccion-subir" class="seccion-contenido container">
     <div class="form-subida">
-        <h2>Subir Nuevo Artículo</h2>
+        <h2 id="titulo-form">Subir Nuevo Artículo</h2>
         <form id="formArticulo">
             <label>Título:</label>
             <input type="text" id="titulo" required placeholder="Título del trabajo">
+            
             <label>Autores:</label>
             <input type="text" id="autores" required placeholder="Autores">
+            
             <label>Año y Categoría:</label>
             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                 <input type="number" id="anio" required placeholder="2026" style="flex:1;">
-                <select id="categoria" required style="flex:2;">
+                <select id="categoria" required style="flex:2;" onchange="ajustarTipoEntrada()">
                     <optgroup label="Artículos">
                         <option value="art-investigacion">Artículos de Investigación</option>
                         <option value="art-difusion">Artículos de Difusión</option>
@@ -128,8 +130,17 @@
                     </optgroup>
                 </select>
             </div>
-            <label>Archivo (PDF):</label>
-            <input type="file" id="archivo" accept=".pdf" required>
+
+            <div id="contenedor-pdf">
+                <label>Archivo (PDF):</label>
+                <input type="file" id="archivo" accept=".pdf">
+            </div>
+
+            <div id="contenedor-url" style="display: none;">
+                <label>Enlace Externo (URL):</label>
+                <input type="url" id="enlace_externo" placeholder="https://ejemplo.com/articulo">
+            </div>
+            
             <button type="submit" class="btn-subir">Guardar en Base espectral</button>
         </form>
     </div>
