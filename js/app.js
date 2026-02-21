@@ -103,7 +103,7 @@ async function cargarArticulosDesdeNube(categoria) {
 
             item.innerHTML = `
                 <h3>${art.titulo}</h3>
-                <p><strong>Autores:</strong> ${art.autores} | <strong>Fecha de publicación   :</strong> ${fechaTexto}</p>
+                <p><strong>Autores:</strong> ${art.autores} | <strong>Publicado en:</strong> ${fechaTexto}</p>
                 <div style="margin-top: 10px; display: flex; gap: 20px; align-items: center;">
                     <a href="${art.pdf_url}" target="_blank" style="color: var(--azul-medio); font-weight: bold; text-decoration: none;">${icono} Ver contenido</a>
                     ${adminLogueado ? `
