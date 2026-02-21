@@ -107,33 +107,33 @@
             <input type="text" id="autores" required placeholder="Autores">
             
             <label>Fecha de Publicación:</label>
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <input type="number" id="anio" required placeholder="Año (2026)" style="flex:2;">
-                <input type="number" id="mes" placeholder="Mes" min="1" max="12" style="flex:1;">
-                <input type="number" id="dia" placeholder="Día" min="1" max="31" style="flex:1;">
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                  <input type="number" id="anio" required placeholder="Año (2026)" style="flex:2;">
+                   <input type="number" id="mes" placeholder="Mes" min="1" max="12" style="flex:1;">
+                  <input type="number" id="dia" placeholder="Día" min="1" max="31" style="flex:1;">
+                </div>
+                <input type="number" id="anio" required placeholder="2026" style="flex:1;">
+                <select id="categoria" required style="flex:2;" onchange="ajustarTipoEntrada()">
+                    <optgroup label="Artículos">
+                        <option value="art-investigacion">Artículos de Investigación</option>
+                        <option value="art-difusion">Artículos de Difusión</option>
+                        <option value="art-referencias">Artículos de Referencias</option>
+                    </optgroup>
+                    <optgroup label="Reflexión">
+                        <option value="ref-agricola">Reflexión Difusa</option>
+                        <option value="ref-aplicada">Reflexión Difusa Agrícola Aplicada</option>
+                        <option value="ref-simulada">Reflexión Difusa Agrícola Simulada</option>
+                    </optgroup>
+                    <optgroup label="Fluorescencia Médica">
+                        <option value="fluo-med-aplicada">F. Médica Aplicada</option>
+                        <option value="fluo-med-simulada">F. Médica Simulada</option>
+                    </optgroup>
+                    <optgroup label="Fluorescencia Agrícola">
+                        <option value="fluo-agri-aplicada">F. Agrícola Aplicada</option>
+                        <option value="fluo-agri-simulada">F. Agrícola Simulada</option>
+                    </optgroup>
+                </select>
             </div>
-
-            <label>Categoría:</label>
-            <select id="categoria" required style="margin-bottom: 15px;" onchange="ajustarTipoEntrada()">
-                <optgroup label="Artículos">
-                    <option value="art-investigacion">Artículos de Investigación</option>
-                    <option value="art-difusion">Artículos de Difusión</option>
-                    <option value="art-referencias">Artículos de Referencias</option>
-                </optgroup>
-                <optgroup label="Reflexión">
-                    <option value="ref-agricola">Reflexión Difusa</option>
-                    <option value="ref-aplicada">Reflexión Difusa Agrícola Aplicada</option>
-                    <option value="ref-simulada">Reflexión Difusa Agrícola Simulada</option>
-                </optgroup>
-                <optgroup label="Fluorescencia Médica">
-                    <option value="fluo-med-aplicada">F. Médica Aplicada</option>
-                    <option value="fluo-med-simulada">F. Médica Simulada</option>
-                </optgroup>
-                <optgroup label="Fluorescencia Agrícola">
-                    <option value="fluo-agri-aplicada">F. Agrícola Aplicada</option>
-                    <option value="fluo-agri-simulada">F. Agrícola Simulada</option>
-                </optgroup>
-            </select>
 
             <div id="contenedor-pdf">
                 <label>Archivo (PDF):</label>
