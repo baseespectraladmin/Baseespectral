@@ -485,7 +485,7 @@ function renderizarAdminMenuLista() {
                             <button onclick="moverElementoMenu(${idx}, ${subIdx}, -1)" style="border:none; background:none; cursor:pointer;" title="Subir">⬆️</button>
                             <button onclick="moverElementoMenu(${idx}, ${subIdx}, 1)" style="border:none; background:none; cursor:pointer;" title="Bajar">⬇️</button>
                             <button onclick="editarElementoMenu(${idx}, ${subIdx})" style="border:none; background:none; cursor:pointer;" title="Editar Nombre">✏️</button>
-                            <button onclick="eliminarElementoMenu(${idx}, ${subIdx})" style="color:#e74c3c; border:none; background:none; cursor:pointer;" title="Borrar">❌</button>
+                            <button onclick="eliminarElementoMenu(${idx}, ${subIdx})" style="color:#e74c3c; border:none; background:none; cursor:pointer;" title="Borrar">🗑️</button>
                         </div>
                     </li>
                 `;
