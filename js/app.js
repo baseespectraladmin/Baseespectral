@@ -1,60 +1,84 @@
 /* ============================================================
    1. CONFIGURACIÓN DE CONEXIÓN Y ESTADO GLOBAL
    ============================================================ */
-// Credenciales de conexión con Supabase (Base de Datos y Almacenamiento)
 const SUPABASE_URL = "https://nxktvjduooqfgzzrdfot.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54a3R2amR1b29xZmd6enJkZm90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMTg1ODgsImV4cCI6MjA4NjY5NDU4OH0.4hYin09mna34MYg3cGdjtzIyvmZOntE5Xceofa9yTAs";
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Credenciales para el acceso administrativo local
 const CREDENCIALES_ADMIN = { usuario: "missas", pass: "123" };
 
-// Variables de estado: controlan la sesión, el modo edición y la carga de la gráfica
 let adminLogueado = false; 
 let editandoId = null; 
 let graficaCargada = false;
 
 /* ============================================================
+   ESTRUCTURA DE MENÚ DINÁMICO Y CONTRASEÑAS
+   ============================================================ */
+const MENU_ORIGINAL = [
+    { type: 'link', target: 'home', text: 'Home' },
+    { type: 'dropdown', text: 'Espectros ▾', items: [
+        { type: 'link', target: 'espectros-absorbancia', text: 'Espectros de absorbancia' },
+        { type: 'link', target: 'espectros-reflexion', text: 'Espectros de reflexión difusa' }
+    ]},
+    { type: 'dropdown', text: 'Artículos ▾', items: [
+        { type: 'link', target: 'art-difusion', text: 'Artículos de difusión' },
+        { type: 'link', target: 'art-investigacion', text: 'Artículos de investigación' },
+        { type: 'link', target: 'art-referencias', text: 'Artículos de referencias' }
+    ]},
+    { type: 'dropdown', text: 'Reflexión Difusa ▾', items: [
+        { type: 'link', target: 'ref-agricola', text: 'Reflexión Difusa' },
+        { type: 'link', target: 'ref-aplicada', text: 'Reflexión Difusa aplicada' },
+        { type: 'link', target: 'ref-simulada', text: 'Reflexión Difusa simulada' }
+    ]},
+    { type: 'dropdown', text: 'Fluorescencia ▾', items: [
+        { type: 'separator', text: 'Fluorescencia Médica' },
+        { type: 'link', target: 'fluo-med-aplicada', text: 'F. Médica Aplicada' },
+        { type: 'link', target: 'fluo-med-simulada', text: 'F. Médica Simulada' },
+        { type: 'separator', text: 'Fluorescencia Agrícola' },
+        { type: 'link', target: 'fluo-agri-aplicada', text: 'F. Agrícola Aplicada' },
+        { type: 'link', target: 'fluo-agri-simulada', text: 'F. Agrícola Simulada' }
+    ]}
+];
+
+// Cargamos de LocalStorage o inicializamos el original
+let menuData = JSON.parse(localStorage.getItem('menuData')) || MENU_ORIGINAL;
+let contrasenasSecciones = JSON.parse(localStorage.getItem('contrasenasSecciones')) || {};
+
+/* ============================================================
    2. NAVEGACIÓN Y CONTROL DE VISTA
    ============================================================ */
 
-/**
- * Gestiona el cambio entre secciones de la página.
- * @param {string} id - El ID del elemento HTML de la sección a mostrar.
- */
 function mostrarSeccion(id) {
-    // Ocultamos todas las secciones quitando la clase activa
+    // NUEVO: Verificación de contraseña de sección
+    if (contrasenasSecciones[id] && contrasenasSecciones[id].activa) {
+        const pass = prompt("Esta sección requiere contraseña para acceder:");
+        if (pass !== contrasenasSecciones[id].password) {
+            alert("Acceso denegado: Contraseña incorrecta.");
+            return;
+        }
+    }
+
     const secciones = document.querySelectorAll('.seccion-contenido');
     secciones.forEach(s => s.classList.remove('seccion-activa'));
 
-    // Mostramos la sección seleccionada
     const seccionSeleccionada = document.getElementById(id);
     if (seccionSeleccionada) {
         seccionSeleccionada.classList.add('seccion-activa');
-        window.scrollTo(0, 0); // Regresamos al inicio de la página
+        window.scrollTo(0, 0); 
 
-        // Si la sección tiene un contenedor de lista, cargamos los datos automáticamente
         const listaContenedor = document.getElementById('lista-' + id);
         if (listaContenedor) cargarArticulosDesdeNube(id);
     }
 
-    // Inicializamos la gráfica solo si entramos a su sección y no ha sido cargada antes
     if (id === 'espectros-reflexion' && !graficaCargada) inicializarGrafica();
 }
 
-/**
- * Controla la visibilidad de campos dinámicos en el formulario (PDF vs URL y fechas detalladas).
- */
 function ajustarTipoEntrada() {
     const cat = document.getElementById('categoria').value;
     const esDifusion = (cat === 'art-difusion');
-
-    // Mostramos/Ocultamos campos adicionales si es un artículo de difusión
     document.getElementById('contenedor-fecha-difusion').style.display = esDifusion ? 'block' : 'none';
-    document.getElementById('contenedor-pdf').style.display = esDifusion ? 'none' : 'block';
-    document.getElementById('contenedor-url').style.display = esDifusion ? 'block' : 'none';
 
-    // Si no es difusión, limpiamos los valores de día y mes para evitar errores de datos
+    // AHORA AMBOS ARCHIVOS/LINKS ESTÁN SIEMPRE VISIBLES
     if (!esDifusion) {
         document.getElementById('dia').value = "";
         document.getElementById('mes').value = "";
@@ -65,10 +89,6 @@ function ajustarTipoEntrada() {
    3. GESTIÓN DE DATOS (LECTURA - READ)
    ============================================================ */
 
-/**
- * Consulta los registros en Supabase filtrando por categoría y ordenándolos cronológicamente.
- * @param {string} categoria - Categoría de los artículos a consultar.
- */
 async function cargarArticulosDesdeNube(categoria) {
     const contenedor = document.getElementById('lista-' + categoria);
     if (!contenedor) return;
@@ -76,7 +96,6 @@ async function cargarArticulosDesdeNube(categoria) {
     contenedor.innerHTML = '<p style="padding: 20px; color: var(--gris);">Consultando base de datos espectral...</p>';
 
     try {
-        // Consultamos y ordenamos: Año (DESC), Mes (DESC) y Día (DESC) -> Del más nuevo al más viejo
         const { data, error } = await _supabase
             .from('articulos') 
             .select('*')
@@ -89,23 +108,25 @@ async function cargarArticulosDesdeNube(categoria) {
 
         contenedor.innerHTML = data.length === 0 ? '<p style="padding: 20px;">Sin registros en esta categoría.</p>' : '';
 
-        // Construcción dinámica de las tarjetas de contenido
         data.forEach(art => {
             const item = document.createElement('div');
             item.className = 'articulo-item';
             
-            // Lógica de visualización de fecha: construye el formato Día/Mes/Año según disponibilidad
             let fechaTexto = `${art.anio}`;
             if (art.mes) fechaTexto = `${art.mes}/${fechaTexto}`;
             if (art.dia && art.mes) fechaTexto = `${art.dia}/${fechaTexto}`;
 
-            const icono = art.categoria === 'art-difusion' ? '🔗' : '📄';
+            // NUEVO: Mostrar PDF y/o Enlace Externo dependiendo de lo que exista
+            let enlacesHtml = '';
+            if (art.pdf_url) enlacesHtml += `<a href="${art.pdf_url}" target="_blank" style="color: var(--azul-medio); font-weight: bold; text-decoration: none; margin-right: 15px;">📄 Ver PDF</a>`;
+            if (art.enlace_externo) enlacesHtml += `<a href="${art.enlace_externo}" target="_blank" style="color: var(--azul-medio); font-weight: bold; text-decoration: none; margin-right: 15px;">🔗 Link externo</a>`;
+            if (!art.pdf_url && !art.enlace_externo) enlacesHtml = '<span style="color: var(--gris);">Sin archivos/enlaces</span>';
 
             item.innerHTML = `
                 <h3>${art.titulo}</h3>
                 <p><strong>Autores:</strong> ${art.autores} | <strong>Publicado en:</strong> ${fechaTexto}</p>
                 <div style="margin-top: 10px; display: flex; gap: 20px; align-items: center;">
-                    <a href="${art.pdf_url}" target="_blank" style="color: var(--azul-medio); font-weight: bold; text-decoration: none;">${icono} Ver artículo</a>
+                    ${enlacesHtml}
                     ${adminLogueado ? `
                         <button onclick='prepararEdicion(${JSON.stringify(art).replace(/'/g, "&apos;")})' style="border:none; background:none; color: var(--azul-medio); cursor:pointer; font-weight:bold;">✏️ Editar</button>
                         <button onclick="borrarArticulo('${art.id}', '${categoria}')" style="border:none; background:none; color: #e74c3c; cursor:pointer; font-weight:bold;">🗑️ Borrar</button>
@@ -124,9 +145,6 @@ async function cargarArticulosDesdeNube(categoria) {
    4. GESTIÓN DE DATOS (ESCRITURA - CUD)
    ============================================================ */
 
-/**
- * Escucha el envío del formulario para Crear o Actualizar registros.
- */
 document.getElementById('formArticulo').addEventListener('submit', async function(e) {
     e.preventDefault();
     const cat = document.getElementById('categoria').value;
@@ -135,17 +153,13 @@ document.getElementById('formArticulo').addEventListener('submit', async functio
     let urlPublica = null;
 
     try {
-        // Gestión de archivos: Subida a storage si no es difusión
-        if (cat !== 'art-difusion' && file) {
+        if (file) {
             const path = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
             const { error: upErr } = await _supabase.storage.from('pdfs').upload(path, file);
             if (upErr) throw upErr;
             urlPublica = _supabase.storage.from('pdfs').getPublicUrl(path).data.publicUrl;
-        } else if (cat === 'art-difusion') {
-            urlPublica = urlExt; // Si es difusión, usamos el link directo
-        }
+        } 
 
-        // Construcción del objeto de datos
         const payload = {
             titulo: document.getElementById('titulo').value,
             autores: document.getElementById('autores').value,
@@ -154,21 +168,21 @@ document.getElementById('formArticulo').addEventListener('submit', async functio
             mes: document.getElementById('mes').value ? parseInt(document.getElementById('mes').value) : null,
             categoria: cat
         };
+        
+        // AHORA MANDAMOS AMBOS SI EXISTEN
         if (urlPublica) payload.pdf_url = urlPublica;
+        if (urlExt) payload.enlace_externo = urlExt;
 
         if (editandoId) {
-            // Acción de ACTUALIZAR
             const { error } = await _supabase.from('articulos').update(payload).eq('id', editandoId);
             if (error) throw error;
             alert("Registro actualizado.");
         } else {
-            // Acción de INSERTAR NUEVO
             const { error } = await _supabase.from('articulos').insert([payload]);
             if (error) throw error;
             alert("Guardado con éxito.");
         }
 
-        // Reseteo de interfaz sin salir de la vista actual
         this.reset();
         editandoId = null;
         document.querySelector('.btn-subir').innerText = "Guardar en Base espectral";
@@ -177,9 +191,6 @@ document.getElementById('formArticulo').addEventListener('submit', async functio
     } catch (err) { alert("Error: " + err.message); }
 });
 
-/**
- * Carga los datos de un registro existente en el formulario para su edición.
- */
 function prepararEdicion(art) {
     editandoId = art.id;
     document.getElementById('titulo').value = art.titulo;
@@ -190,21 +201,20 @@ function prepararEdicion(art) {
     document.getElementById('categoria').value = art.categoria;
     
     ajustarTipoEntrada();
-    if (art.categoria === 'art-difusion') document.getElementById('enlace_externo').value = art.pdf_url;
+    if (art.enlace_externo) {
+        document.getElementById('enlace_externo').value = art.enlace_externo;
+    } else { document.getElementById('enlace_externo').value = ''; }
     
     document.querySelector('.btn-subir').innerText = "Actualizar Registro";
     mostrarSeccion('seccion-subir');
 }
 
-/**
- * Elimina un registro de la base de datos tras confirmación.
- */
 async function borrarArticulo(id, cat) {
     if (confirm("¿Confirmas la eliminación permanente de este registro?")) {
         try {
             const { error } = await _supabase.from('articulos').delete().eq('id', id);
             if (error) throw error;
-            cargarArticulosDesdeNube(cat); // Refrescamos la lista actual
+            cargarArticulosDesdeNube(cat); 
         } catch (err) { alert(err.message); }
     }
 }
@@ -213,9 +223,6 @@ async function borrarArticulo(id, cat) {
    5. GRÁFICA CON RADAR MATEMÁTICO (PLOTLY)
    ============================================================ */
 
-/**
- * Inicializa la gráfica de reflexión difusa con funcionalidad de radar de seguimiento.
- */
 async function inicializarGrafica() {
     const gd = document.getElementById('grafica-reflexion');
     const tooltip = document.getElementById('custom-tooltip');
@@ -224,7 +231,6 @@ async function inicializarGrafica() {
     if (!gd) return;
 
     try {
-        // Obtención y procesamiento del archivo CSV
         const resp = await fetch('css/data/reflexion.csv');
         const texto = await resp.text();
         const filas = texto.trim().split('\n').filter(l => l.trim() !== '');
@@ -236,7 +242,6 @@ async function inicializarGrafica() {
             if (!isNaN(w) && !isNaN(r)) { wavelength.push(w); reflectancia.push(r); }
         });
 
-        // Configuración visual de la gráfica (Línea Spline + Marcador Radar)
         const trace = { x: wavelength, y: reflectancia, mode: 'lines', line: { color: '#3282b8', width: 2.5, shape: 'spline' }, hoverinfo: 'none' };
         const hoverTrace = { x: [0], y: [0], mode: 'markers', marker: { size: 12, color: '#006847', line: { width: 3, color: '#ffffff' } }, hoverinfo: 'none' };
         const layout = {
@@ -249,7 +254,6 @@ async function inicializarGrafica() {
         await Plotly.newPlot(gd, [trace, hoverTrace], layout, { responsive: true, displayModeBar: false });
         graficaCargada = true;
 
-        // Función de interpolación: calcula el punto exacto en Y para cualquier X en la curva
         function interpY(x) {
             if (x <= wavelength[0]) return reflectancia[0];
             if (x >= wavelength[wavelength.length - 1]) return reflectancia[reflectancia.length - 1];
@@ -258,7 +262,6 @@ async function inicializarGrafica() {
             return y1 + ((x - x1) / (x2 - x1)) * (y2 - y1);
         }
 
-        // Lógica de seguimiento del Radar al mover el mouse
         gd.addEventListener('mousemove', (ev) => {
             const rect = gd.getBoundingClientRect();
             const fl = gd._fullLayout;
@@ -268,9 +271,7 @@ async function inicializarGrafica() {
 
             if (dataX >= 400 && dataX <= 800) {
                 const yInterp = interpY(dataX);
-                // Movemos el punto del radar sobre la línea
                 Plotly.restyle(gd, { x: [[dataX]], y: [[yInterp]] }, [1]);
-                // Actualizamos los valores y posición del tooltip tricolor
                 if(lambdaSpan) lambdaSpan.textContent = dataX.toFixed(2);
                 if(reflSpan) reflSpan.textContent = yInterp.toFixed(2);
                 if(tooltip) {
@@ -284,28 +285,183 @@ async function inicializarGrafica() {
 }
 
 /* ============================================================
-   6. APOYO ADMINISTRATIVO Y MENÚ
+   6. APOYO ADMINISTRATIVO, MENÚ DINÁMICO
    ============================================================ */
 
-/**
- * Verifica las credenciales para habilitar las funciones de gestión.
- */
 function verificarAdmin() {
     const u = document.getElementById('admin-user').value;
     const p = document.getElementById('admin-pass').value;
     if (u === CREDENCIALES_ADMIN.usuario && p === CREDENCIALES_ADMIN.pass) {
         adminLogueado = true;
-        document.getElementById('nav-subir').style.display = 'block';
-        document.getElementById('nav-login').style.display = 'none';
         alert("Acceso administrativo activo.");
+        renderizarMenu(); 
         mostrarSeccion('home');
     } else { alert("Credenciales incorrectas."); }
 }
 
-/**
- * Controla la apertura/cierre del menú hamburguesa en dispositivos móviles.
- */
 function toggleMenu() {
     const nav = document.getElementById('nav-menu');
     if (window.innerWidth <= 768) nav.classList.toggle('nav-active');
 }
+
+/* --- FUNCIONES DEL MENÚ EDITABLE --- */
+function asegurarSeccionDOM(id, titulo) {
+    if (!document.getElementById(id) && id !== 'home' && !id.startsWith('seccion-')) {
+        const div = document.createElement('div');
+        div.id = id;
+        div.className = 'seccion-contenido container';
+        div.innerHTML = `<h1>${titulo}</h1><hr><div id="lista-${id}" class="lista-container"></div>`;
+        document.body.appendChild(div);
+    }
+}
+
+function renderizarMenu() {
+    const navUl = document.getElementById('lista-navegacion');
+    if (!navUl) return;
+
+    // Botones de administrador que siempre van al final
+    const loginSubirHtml = `
+        <li id="nav-login" style="${adminLogueado ? 'display:none;' : ''}"><a onclick="mostrarSeccion('seccion-login'); toggleMenu()">Admin Login</a></li>
+        <li id="nav-subir" style="${adminLogueado ? '' : 'display:none;'}"><a onclick="mostrarSeccion('seccion-subir'); toggleMenu()" style="color: var(--verde-acento);">Subir artículo</a></li>
+        <li id="nav-gestion-menu" style="${adminLogueado ? '' : 'display:none;'}"><a onclick="mostrarSeccion('seccion-gestion-menu'); toggleMenu()" style="color: #f39c12; font-weight:bold;">Gestión Menú</a></li>
+    `;
+
+    let menuHtml = '';
+    menuData.forEach((item, index) => {
+        if (item.type === 'link') {
+            menuHtml += `<li><a onclick="mostrarSeccion('${item.target}'); toggleMenu()">${item.text}</a></li>`;
+            asegurarSeccionDOM(item.target, item.text);
+        } else if (item.type === 'dropdown') {
+            let dropItems = '';
+            item.items.forEach((sub, subIdx) => {
+                if (sub.type === 'link') {
+                    dropItems += `<a onclick="mostrarSeccion('${sub.target}'); toggleMenu()">${sub.text}</a>`;
+                    asegurarSeccionDOM(sub.target, sub.text);
+                } else if (sub.type === 'separator') {
+                    dropItems += `<span class="menu-separator">${sub.text}</span>`;
+                }
+            });
+            menuHtml += `
+                <li class="has-dropdown">
+                    <a class="nav-link">${item.text}</a>
+                    <div class="dropdown">${dropItems}</div>
+                </li>
+            `;
+        }
+    });
+
+    navUl.innerHTML = menuHtml + loginSubirHtml;
+    
+    // Actualizamos las vistas del administrador si están abiertas
+    if(adminLogueado) {
+        actualizarSelectUbicacion();
+        renderizarAdminMenuLista();
+    }
+}
+
+function actualizarSelectUbicacion() {
+    const select = document.getElementById('menu-ubicacion');
+    if(!select) return;
+    select.innerHTML = '<option value="main">Barra Principal</option>';
+    menuData.forEach((item, index) => {
+        if (item.type === 'dropdown') {
+            select.innerHTML += `<option value="${index}">Dentro del menú: ${item.text}</option>`;
+        }
+    });
+}
+
+function cambiarTipoMenu() {
+    const tipo = document.getElementById('menu-tipo').value;
+    document.getElementById('grupo-menu-id').style.display = (tipo === 'link') ? 'block' : 'none';
+    document.getElementById('grupo-menu-pass').style.display = (tipo === 'link') ? 'block' : 'none';
+}
+
+function toggleMenuPass() {
+    const isChecked = document.getElementById('menu-protegido').checked;
+    document.getElementById('menu-pass').style.display = isChecked ? 'block' : 'none';
+}
+
+function agregarElementoMenu() {
+    const ubicacion = document.getElementById('menu-ubicacion').value;
+    const tipo = document.getElementById('menu-tipo').value;
+    const texto = document.getElementById('menu-texto').value;
+    const idSec = document.getElementById('menu-id-seccion').value;
+    const protegido = document.getElementById('menu-protegido').checked;
+    const pass = document.getElementById('menu-pass').value;
+
+    if (!texto) return alert("Debes ingresar un texto a mostrar en el menú.");
+    if (tipo === 'link' && !idSec) return alert("Debes ingresar un ID para la sección (ej. mi-seccion).");
+
+    const nuevoElemento = { type: tipo, text: texto };
+    
+    if (tipo === 'link') {
+        nuevoElemento.target = idSec;
+        if (protegido && pass) {
+            contrasenasSecciones[idSec] = { activa: true, password: pass };
+            localStorage.setItem('contrasenasSecciones', JSON.stringify(contrasenasSecciones));
+        }
+    } else if (tipo === 'dropdown') {
+        nuevoElemento.items = [];
+    }
+
+    if (ubicacion === 'main') {
+        menuData.push(nuevoElemento);
+    } else {
+        const idx = parseInt(ubicacion);
+        if (menuData[idx] && menuData[idx].items) {
+            menuData[idx].items.push(nuevoElemento);
+        }
+    }
+
+    localStorage.setItem('menuData', JSON.stringify(menuData));
+    alert("Elemento agregado correctamente. La página ha sido actualizada.");
+    
+    // Reseteamos el formulario
+    document.getElementById('menu-texto').value = '';
+    document.getElementById('menu-id-seccion').value = '';
+    renderizarMenu();
+}
+
+function eliminarElementoMenu(indexP, indexSub = null) {
+    if (!confirm("⚠️ ADVERTENCIA: ¿Estás seguro de que deseas eliminar este elemento del menú? Se perderá el acceso directo a esta sección y requerirá configuración nuevamente si deseas recuperarlo.")) return;
+    
+    if (indexSub !== null) {
+        menuData[indexP].items.splice(indexSub, 1);
+    } else {
+        menuData.splice(indexP, 1);
+    }
+    
+    localStorage.setItem('menuData', JSON.stringify(menuData));
+    renderizarMenu();
+}
+
+function renderizarAdminMenuLista() {
+    const lista = document.getElementById('lista-admin-menu');
+    if(!lista) return;
+    
+    let html = '<ul style="list-style:none; padding:0; margin:0;">';
+    menuData.forEach((item, idx) => {
+        html += `<li style="margin-bottom:10px; padding:12px; background:#fff; border:1px solid #ddd; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+            <strong style="color: var(--azul-oscuro);">${item.text}</strong> <span style="font-size:12px; color:#888;">(${item.type})</span>
+            <button onclick="eliminarElementoMenu(${idx})" style="color:red; float:right; border:none; background:none; cursor:pointer; font-weight:bold;">🗑️ Borrar</button>
+        `;
+        if (item.type === 'dropdown' && item.items) {
+            html += '<ul style="list-style:none; padding-left:20px; margin-top:10px;">';
+            item.items.forEach((sub, subIdx) => {
+                html += `<li style="margin-bottom:8px; padding:8px; background:#f4f7fb; border:1px solid #eee; border-radius:4px;">
+                    ${sub.text} <span style="font-size:12px; color:#888;">(${sub.type})</span>
+                    <button onclick="eliminarElementoMenu(${idx}, ${subIdx})" style="color:#e74c3c; float:right; border:none; background:none; cursor:pointer;">🗑️ Borrar</button>
+                </li>`;
+            });
+            html += '</ul>';
+        }
+        html += '</li>';
+    });
+    html += '</ul>';
+    lista.innerHTML = html;
+}
+
+// Inicializar el menú al cargar la página
+document.addEventListener('DOMContentLoaded', () => {
+    renderizarMenu();
+});

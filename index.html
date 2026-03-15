@@ -15,7 +15,7 @@
         <div class="menu-icon" onclick="toggleMenu()">☰</div>
         
         <nav id="nav-menu">
-            <ul>
+            <ul id="lista-navegacion">
                 <li><a onclick="mostrarSeccion('home'); toggleMenu()">Home</a></li>
                 <li class="has-dropdown">
                     <a class="nav-link">Espectros ▾</a>
@@ -52,7 +52,7 @@
                         <a onclick="mostrarSeccion('fluo-agri-simulada'); toggleMenu()">F. Agrícola Simulada</a>
                     </div>
                 </li>
-                <li><a onclick="mostrarSeccion('seccion-login'); toggleMenu()" id="nav-login">Admin Login</a></li>
+                <li id="nav-login"><a onclick="mostrarSeccion('seccion-login'); toggleMenu()">Admin Login</a></li>
                 <li id="nav-subir" style="display: none;">
                     <a onclick="mostrarSeccion('seccion-subir'); toggleMenu()" style="color: var(--verde-acento);">Subir artículo</a>
                 </li>
@@ -137,18 +137,57 @@
                 </div>
             </div>
 
-            <div id="contenedor-pdf">
-                <label>Archivo (PDF):</label>
-                <input type="file" id="archivo" accept=".pdf">
-            </div>
-
-            <div id="contenedor-url" style="display: none;">
-                <label>Enlace Externo (URL):</label>
-                <input type="url" id="enlace_externo" placeholder="https://ejemplo.com/articulo">
+            <div id="contenedor-archivos" style="display: flex; gap: 15px; margin-bottom: 15px;">
+                <div id="contenedor-pdf" style="flex: 1;">
+                    <label>Archivo (PDF):</label>
+                    <input type="file" id="archivo" accept=".pdf">
+                </div>
+                <div id="contenedor-url" style="flex: 1;">
+                    <label>Enlace Externo (URL):</label>
+                    <input type="url" id="enlace_externo" placeholder="https://ejemplo.com/articulo">
+                </div>
             </div>
             
             <button type="submit" class="btn-subir">Guardar en Base espectral</button>
         </form>
+    </div>
+</div>
+
+<div id="seccion-gestion-menu" class="seccion-contenido container">
+    <div class="form-subida" style="max-width: 800px;">
+        <h2>Gestión del Menú Principal y Secciones</h2>
+        <div id="lista-admin-menu" style="margin-bottom: 20px; background: #f9f9f9; padding: 15px; border-radius: 10px;">
+            </div>
+        
+        <hr style="margin: 20px 0; border: 1px solid #dfe6e9;">
+        <h3 style="color: var(--azul-medio); margin-bottom: 15px;">Agregar Nuevo Elemento</h3>
+        <div class="form-group">
+            <label>Ubicación:</label>
+            <select id="menu-ubicacion"></select>
+        </div>
+        <div class="form-group">
+            <label>Tipo de Elemento:</label>
+            <select id="menu-tipo" onchange="cambiarTipoMenu()">
+                <option value="link">Sección (Enlace)</option>
+                <option value="dropdown">Desplegable (Menú)</option>
+                <option value="separator">Separador de categoría</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Texto a mostrar:</label>
+            <input type="text" id="menu-texto" placeholder="Ej. Nueva Sección">
+        </div>
+        <div class="form-group" id="grupo-menu-id">
+            <label>ID de la sección (sin espacios, ej. mi-seccion-nueva):</label>
+            <input type="text" id="menu-id-seccion" placeholder="mi-seccion">
+        </div>
+        <div class="form-group" id="grupo-menu-pass">
+            <label style="display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" id="menu-protegido" onchange="toggleMenuPass()" style="width:auto;"> Proteger sección con contraseña
+            </label>
+            <input type="password" id="menu-pass" placeholder="Contraseña requerida" style="display:none; margin-top:10px;">
+        </div>
+        <button onclick="agregarElementoMenu()" class="btn-subir" style="background: var(--azul-medio);">Agregar Elemento al Menú</button>
     </div>
 </div>
 

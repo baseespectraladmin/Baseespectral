@@ -36,26 +36,26 @@ header {
 .navbar {
     display: flex;
     align-items: center;
-    height: 70px; /* Mantenemos la altura original */
+    height: 70px;
 }
 
 .logo {
     color: var(--blanco);
     font-size: 20px;
     font-weight: 600;
-    margin-right: 40px; /* Espacio original entre logo y menú */
+    margin-right: 40px;
     white-space: nowrap;
     cursor: pointer;
 }
 
 .menu-icon {
-    display: none; /* Se activa en el @media */
-    font-size: 32px; /* Un poco más grande para el dedo */
-    color: #ffffff !important; /* Blanco brillante */
+    display: none;
+    font-size: 32px;
+    color: #ffffff !important;
     font-weight: bold;
     cursor: pointer;
     padding: 10px;
-    line-height: 1; /* Centra el icono verticalmente */
+    line-height: 1;
 }
 
 nav ul {
@@ -186,7 +186,7 @@ nav ul li:hover .dropdown {
     
     .navbar {
         display: flex;
-        justify-content: space-between; /* Logo a la izquierda, ☰ a la derecha */
+        justify-content: space-between;
         width: 100%;
         padding: 0 10px;
     }
@@ -222,19 +222,17 @@ nav ul li:hover .dropdown {
     .container { padding: 30px 20px; }
     .grid { grid-template-columns: 1fr; }
     #grafica-reflexion { height: 300px !important; }
+    #contenedor-archivos { flex-direction: column; } /* Ajuste celular inputs lado a lado */
 }
 /* =========================================
    REFUERZO DE FORMULARIOS (Login y Subida)
    ========================================= */
-
-/* Contenedor base para que las secciones se centren bien */
 .container {
     padding: 40px 20px;
     max-width: 1200px;
     margin: 0 auto;
 }
 
-/* Estilo unificado para las tarjetas de formulario */
 .login-card, .form-subida {
     background: var(--blanco);
     padding: 30px;
@@ -242,15 +240,14 @@ nav ul li:hover .dropdown {
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     margin: 20px auto;
     width: 100%;
-    max-width: 450px; /* Tamaño ideal para Login */
+    max-width: 450px;
     border-top: 5px solid var(--azul-claro);
 }
 
 .form-subida {
-    max-width: 700px; /* La subida es más ancha para los campos dobles */
+    max-width: 700px; 
 }
 
-/* Títulos de los formularios */
 .login-card h2, .form-subida h2 {
     text-align: center;
     color: var(--azul-oscuro);
@@ -258,7 +255,6 @@ nav ul li:hover .dropdown {
     font-size: 1.5rem;
 }
 
-/* Inputs y Selects */
 .form-group {
     margin-bottom: 15px;
 }
@@ -286,7 +282,6 @@ input:focus {
     outline: none;
 }
 
-/* Botón de acción */
 .btn-subir {
     background: var(--verde-acento);
     color: white;
