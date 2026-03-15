@@ -40,7 +40,6 @@ const MENU_ORIGINAL = [
     ]}
 ];
 
-// Cargamos de LocalStorage o inicializamos el original
 let menuData = JSON.parse(localStorage.getItem('menuData')) || MENU_ORIGINAL;
 let contrasenasSecciones = JSON.parse(localStorage.getItem('contrasenasSecciones')) || {};
 
@@ -49,7 +48,6 @@ let contrasenasSecciones = JSON.parse(localStorage.getItem('contrasenasSecciones
    ============================================================ */
 
 function mostrarSeccion(id) {
-    // NUEVO: Verificación de contraseña de sección
     if (contrasenasSecciones[id] && contrasenasSecciones[id].activa) {
         const pass = prompt("Esta sección requiere contraseña para acceder:");
         if (pass !== contrasenasSecciones[id].password) {
@@ -78,7 +76,6 @@ function ajustarTipoEntrada() {
     const esDifusion = (cat === 'art-difusion');
     document.getElementById('contenedor-fecha-difusion').style.display = esDifusion ? 'block' : 'none';
 
-    // AHORA AMBOS ARCHIVOS/LINKS ESTÁN SIEMPRE VISIBLES
     if (!esDifusion) {
         document.getElementById('dia').value = "";
         document.getElementById('mes').value = "";
@@ -116,7 +113,6 @@ async function cargarArticulosDesdeNube(categoria) {
             if (art.mes) fechaTexto = `${art.mes}/${fechaTexto}`;
             if (art.dia && art.mes) fechaTexto = `${art.dia}/${fechaTexto}`;
 
-            // NUEVO: Mostrar PDF y/o Enlace Externo dependiendo de lo que exista
             let enlacesHtml = '';
             if (art.pdf_url) enlacesHtml += `<a href="${art.pdf_url}" target="_blank" style="color: var(--azul-medio); font-weight: bold; text-decoration: none; margin-right: 15px;">📄 Ver PDF</a>`;
             if (art.enlace_externo) enlacesHtml += `<a href="${art.enlace_externo}" target="_blank" style="color: var(--azul-medio); font-weight: bold; text-decoration: none; margin-right: 15px;">🔗 Link externo</a>`;
@@ -169,7 +165,6 @@ document.getElementById('formArticulo').addEventListener('submit', async functio
             categoria: cat
         };
         
-        // AHORA MANDAMOS AMBOS SI EXISTEN
         if (urlPublica) payload.pdf_url = urlPublica;
         if (urlExt) payload.enlace_externo = urlExt;
 
@@ -319,7 +314,6 @@ function renderizarMenu() {
     const navUl = document.getElementById('lista-navegacion');
     if (!navUl) return;
 
-    // Botones de administrador que siempre van al final
     const loginSubirHtml = `
         <li id="nav-login" style="${adminLogueado ? 'display:none;' : ''}"><a onclick="mostrarSeccion('seccion-login'); toggleMenu()">Admin Login</a></li>
         <li id="nav-subir" style="${adminLogueado ? '' : 'display:none;'}"><a onclick="mostrarSeccion('seccion-subir'); toggleMenu()" style="color: var(--verde-acento);">Subir artículo</a></li>
@@ -352,7 +346,6 @@ function renderizarMenu() {
 
     navUl.innerHTML = menuHtml + loginSubirHtml;
     
-    // Actualizamos las vistas del administrador si están abiertas
     if(adminLogueado) {
         actualizarSelectUbicacion();
         renderizarAdminMenuLista();
@@ -416,14 +409,13 @@ function agregarElementoMenu() {
     localStorage.setItem('menuData', JSON.stringify(menuData));
     alert("Elemento agregado correctamente. La página ha sido actualizada.");
     
-    // Reseteamos el formulario
     document.getElementById('menu-texto').value = '';
     document.getElementById('menu-id-seccion').value = '';
     renderizarMenu();
 }
 
 function eliminarElementoMenu(indexP, indexSub = null) {
-    if (!confirm("⚠️ ADVERTENCIA: ¿Estás seguro de que deseas eliminar este elemento del menú? Se perderá el acceso directo a esta sección y requerirá configuración nuevamente si deseas recuperarlo.")) return;
+    if (!confirm("⚠️ ADVERTENCIA: ¿Estás seguro de que deseas eliminar este elemento del menú?")) return;
     
     if (indexSub !== null) {
         menuData[indexP].items.splice(indexSub, 1);
@@ -435,27 +427,71 @@ function eliminarElementoMenu(indexP, indexSub = null) {
     renderizarMenu();
 }
 
+/* --- NUEVAS FUNCIONES PARA EDITAR Y REORDENAR --- */
+
+function editarElementoMenu(indexP, indexSub = null) {
+    let item = (indexSub !== null) ? menuData[indexP].items[indexSub] : menuData[indexP];
+    let nuevoTexto = prompt("Modifica el nombre a mostrar:", item.text);
+    
+    if (nuevoTexto !== null && nuevoTexto.trim() !== "") {
+        item.text = nuevoTexto.trim();
+        localStorage.setItem('menuData', JSON.stringify(menuData));
+        renderizarMenu();
+    }
+}
+
+function moverElementoMenu(indexP, indexSub, direccion) {
+    let arr = (indexSub !== null) ? menuData[indexP].items : menuData;
+    let idx = (indexSub !== null) ? indexSub : indexP;
+
+    if (idx + direccion < 0 || idx + direccion >= arr.length) return; 
+
+    let temp = arr[idx];
+    arr[idx] = arr[idx + direccion];
+    arr[idx + direccion] = temp;
+
+    localStorage.setItem('menuData', JSON.stringify(menuData));
+    renderizarMenu();
+}
+
 function renderizarAdminMenuLista() {
     const lista = document.getElementById('lista-admin-menu');
     if(!lista) return;
     
     let html = '<ul style="list-style:none; padding:0; margin:0;">';
     menuData.forEach((item, idx) => {
-        html += `<li style="margin-bottom:10px; padding:12px; background:#fff; border:1px solid #ddd; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
-            <strong style="color: var(--azul-oscuro);">${item.text}</strong> <span style="font-size:12px; color:#888;">(${item.type})</span>
-            <button onclick="eliminarElementoMenu(${idx})" style="color:red; float:right; border:none; background:none; cursor:pointer; font-weight:bold;">🗑️ Borrar</button>
+        html += `
+            <li style="margin-bottom:10px; padding:12px; background:#fff; border:1px solid #ddd; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong style="color: var(--azul-oscuro);">${item.text}</strong> <span style="font-size:12px; color:#888;">(${item.type})</span>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="moverElementoMenu(${idx}, null, -1)" style="border:none; background:none; cursor:pointer;" title="Subir">⬆️</button>
+                    <button onclick="moverElementoMenu(${idx}, null, 1)" style="border:none; background:none; cursor:pointer;" title="Bajar">⬇️</button>
+                    <button onclick="editarElementoMenu(${idx}, null)" style="border:none; background:none; cursor:pointer;" title="Editar Nombre">✏️</button>
+                    <button onclick="eliminarElementoMenu(${idx}, null)" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold;" title="Borrar">🗑️</button>
+                </div>
+            </li>
         `;
         if (item.type === 'dropdown' && item.items) {
             html += '<ul style="list-style:none; padding-left:20px; margin-top:10px;">';
             item.items.forEach((sub, subIdx) => {
-                html += `<li style="margin-bottom:8px; padding:8px; background:#f4f7fb; border:1px solid #eee; border-radius:4px;">
-                    ${sub.text} <span style="font-size:12px; color:#888;">(${sub.type})</span>
-                    <button onclick="eliminarElementoMenu(${idx}, ${subIdx})" style="color:#e74c3c; float:right; border:none; background:none; cursor:pointer;">🗑️ Borrar</button>
-                </li>`;
+                html += `
+                    <li style="margin-bottom:8px; padding:8px; background:#f4f7fb; border:1px solid #eee; border-radius:4px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            ${sub.text} <span style="font-size:12px; color:#888;">(${sub.type})</span>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="moverElementoMenu(${idx}, ${subIdx}, -1)" style="border:none; background:none; cursor:pointer;" title="Subir">⬆️</button>
+                            <button onclick="moverElementoMenu(${idx}, ${subIdx}, 1)" style="border:none; background:none; cursor:pointer;" title="Bajar">⬇️</button>
+                            <button onclick="editarElementoMenu(${idx}, ${subIdx})" style="border:none; background:none; cursor:pointer;" title="Editar Nombre">✏️</button>
+                            <button onclick="eliminarElementoMenu(${idx}, ${subIdx})" style="color:#e74c3c; border:none; background:none; cursor:pointer;" title="Borrar">🗑️</button>
+                        </div>
+                    </li>
+                `;
             });
             html += '</ul>';
         }
-        html += '</li>';
     });
     html += '</ul>';
     lista.innerHTML = html;
