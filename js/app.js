@@ -280,7 +280,7 @@ async function inicializarGrafica() {
 }
 
 /* ============================================================
-   6. APOYO ADMINISTRATIVO, MENÚ DINÁMICO
+   6. APOYO ADMINISTRATIVO, MENÚ DINÁMICO Y CONTRASEÑAS
    ============================================================ */
 
 function verificarAdmin() {
@@ -299,7 +299,6 @@ function toggleMenu() {
     if (window.innerWidth <= 768) nav.classList.toggle('nav-active');
 }
 
-/* --- FUNCIONES DEL MENÚ EDITABLE --- */
 function asegurarSeccionDOM(id, titulo) {
     if (!document.getElementById(id) && id !== 'home' && !id.startsWith('seccion-')) {
         const div = document.createElement('div');
@@ -427,8 +426,6 @@ function eliminarElementoMenu(indexP, indexSub = null) {
     renderizarMenu();
 }
 
-/* --- NUEVAS FUNCIONES PARA EDITAR Y REORDENAR --- */
-
 function editarElementoMenu(indexP, indexSub = null) {
     let item = (indexSub !== null) ? menuData[indexP].items[indexSub] : menuData[indexP];
     let nuevoTexto = prompt("Modifica el nombre a mostrar:", item.text);
@@ -454,18 +451,55 @@ function moverElementoMenu(indexP, indexSub, direccion) {
     renderizarMenu();
 }
 
+/* --- NUEVA FUNCIÓN PARA GESTIONAR CONTRASEÑAS EXISTENTES --- */
+function gestionarContrasena(indexP, indexSub = null) {
+    let item = (indexSub !== null) ? menuData[indexP].items[indexSub] : menuData[indexP];
+    
+    if (item.type !== 'link') return;
+
+    const idSec = item.target;
+    const tienePass = contrasenasSecciones[idSec] && contrasenasSecciones[idSec].activa;
+    
+    let msg = tienePass 
+        ? `Esta sección ESTÁ PROTEGIDA.\nContraseña actual: ${contrasenasSecciones[idSec].password}\n\nIngresa una nueva contraseña para cambiarla, o deja el espacio en blanco para QUITAR la protección:`
+        : `Esta sección NO ESTÁ PROTEGIDA.\n\nIngresa una contraseña para activarla (deja en blanco para cancelar):`;
+
+    let nuevaPass = prompt(msg);
+
+    if (nuevaPass === null) return; // Canceló el prompt
+
+    if (nuevaPass.trim() === "") {
+        if (tienePass) {
+            contrasenasSecciones[idSec].activa = false;
+            contrasenasSecciones[idSec].password = "";
+            alert("Protección eliminada con éxito.");
+        }
+    } else {
+        contrasenasSecciones[idSec] = { activa: true, password: nuevaPass.trim() };
+        alert("Contraseña guardada y protección activada.");
+    }
+
+    localStorage.setItem('contrasenasSecciones', JSON.stringify(contrasenasSecciones));
+    renderizarMenu(); // Refrescar los candados visualmente
+}
+
 function renderizarAdminMenuLista() {
     const lista = document.getElementById('lista-admin-menu');
     if(!lista) return;
     
     let html = '<ul style="list-style:none; padding:0; margin:0;">';
     menuData.forEach((item, idx) => {
+        let isProtected = item.type === 'link' && contrasenasSecciones[item.target] && contrasenasSecciones[item.target].activa;
+        let lockIcon = isProtected ? '🔒' : '🔓';
+        let btnPass = item.type === 'link' ? `<button onclick="gestionarContrasena(${idx}, null)" style="border:none; background:none; cursor:pointer;" title="Gestionar Contraseña">${lockIcon}</button>` : '';
+
         html += `
             <li style="margin-bottom:10px; padding:12px; background:#fff; border:1px solid #ddd; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <strong style="color: var(--azul-oscuro);">${item.text}</strong> <span style="font-size:12px; color:#888;">(${item.type})</span>
                 </div>
                 <div style="display: flex; gap: 8px;">
+                    ${btnPass}
                     <button onclick="moverElementoMenu(${idx}, null, -1)" style="border:none; background:none; cursor:pointer;" title="Subir">⬆️</button>
                     <button onclick="moverElementoMenu(${idx}, null, 1)" style="border:none; background:none; cursor:pointer;" title="Bajar">⬇️</button>
                     <button onclick="editarElementoMenu(${idx}, null)" style="border:none; background:none; cursor:pointer;" title="Editar Nombre">✏️</button>
@@ -476,12 +510,17 @@ function renderizarAdminMenuLista() {
         if (item.type === 'dropdown' && item.items) {
             html += '<ul style="list-style:none; padding-left:20px; margin-top:10px;">';
             item.items.forEach((sub, subIdx) => {
+                let isProtectedSub = sub.type === 'link' && contrasenasSecciones[sub.target] && contrasenasSecciones[sub.target].activa;
+                let lockIconSub = isProtectedSub ? '🔒' : '🔓';
+                let btnPassSub = sub.type === 'link' ? `<button onclick="gestionarContrasena(${idx}, ${subIdx})" style="border:none; background:none; cursor:pointer;" title="Gestionar Contraseña">${lockIconSub}</button>` : '';
+
                 html += `
                     <li style="margin-bottom:8px; padding:8px; background:#f4f7fb; border:1px solid #eee; border-radius:4px; display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             ${sub.text} <span style="font-size:12px; color:#888;">(${sub.type})</span>
                         </div>
                         <div style="display: flex; gap: 8px;">
+                            ${btnPassSub}
                             <button onclick="moverElementoMenu(${idx}, ${subIdx}, -1)" style="border:none; background:none; cursor:pointer;" title="Subir">⬆️</button>
                             <button onclick="moverElementoMenu(${idx}, ${subIdx}, 1)" style="border:none; background:none; cursor:pointer;" title="Bajar">⬇️</button>
                             <button onclick="editarElementoMenu(${idx}, ${subIdx})" style="border:none; background:none; cursor:pointer;" title="Editar Nombre">✏️</button>
