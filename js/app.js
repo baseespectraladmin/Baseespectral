@@ -309,6 +309,33 @@ function asegurarSeccionDOM(id, titulo) {
     }
 }
 
+/* --- NUEVA FUNCIÓN PARA ACTUALIZAR EL FORMULARIO DE SUBIDA DINÁMICAMENTE --- */
+function actualizarSelectCategorias() {
+    const select = document.getElementById('categoria');
+    if (!select) return;
+
+    let html = '';
+    menuData.forEach(item => {
+        // Ignoramos 'home' y las secciones del administrador para no subir artículos ahí
+        if (item.type === 'link' && item.target !== 'home' && !item.target.startsWith('seccion-')) {
+            html += `<option value="${item.target}">${item.text}</option>`;
+        } else if (item.type === 'dropdown') {
+            let optionsHtml = '';
+            item.items.forEach(sub => {
+                if (sub.type === 'link' && sub.target !== 'home' && !sub.target.startsWith('seccion-')) {
+                    optionsHtml += `<option value="${sub.target}">${sub.text}</option>`;
+                }
+            });
+            if (optionsHtml !== '') {
+                // Removemos la flechita del nombre principal para que se vea limpio en el grupo
+                html += `<optgroup label="${item.text.replace(' ▾', '')}">${optionsHtml}</optgroup>`;
+            }
+        }
+    });
+    
+    select.innerHTML = html;
+}
+
 function renderizarMenu() {
     const navUl = document.getElementById('lista-navegacion');
     if (!navUl) return;
@@ -345,6 +372,9 @@ function renderizarMenu() {
 
     navUl.innerHTML = menuHtml + loginSubirHtml;
     
+    // Al renderizar el menú, también actualizamos el select del formulario de subida
+    actualizarSelectCategorias();
+
     if(adminLogueado) {
         actualizarSelectUbicacion();
         renderizarAdminMenuLista();
@@ -451,7 +481,6 @@ function moverElementoMenu(indexP, indexSub, direccion) {
     renderizarMenu();
 }
 
-/* --- NUEVA FUNCIÓN PARA GESTIONAR CONTRASEÑAS EXISTENTES --- */
 function gestionarContrasena(indexP, indexSub = null) {
     let item = (indexSub !== null) ? menuData[indexP].items[indexSub] : menuData[indexP];
     
@@ -466,7 +495,7 @@ function gestionarContrasena(indexP, indexSub = null) {
 
     let nuevaPass = prompt(msg);
 
-    if (nuevaPass === null) return; // Canceló el prompt
+    if (nuevaPass === null) return; 
 
     if (nuevaPass.trim() === "") {
         if (tienePass) {
@@ -480,7 +509,7 @@ function gestionarContrasena(indexP, indexSub = null) {
     }
 
     localStorage.setItem('contrasenasSecciones', JSON.stringify(contrasenasSecciones));
-    renderizarMenu(); // Refrescar los candados visualmente
+    renderizarMenu(); 
 }
 
 function renderizarAdminMenuLista() {
