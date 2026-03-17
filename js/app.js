@@ -12,7 +12,7 @@ let editandoId = null;
 let graficaCargada = false;
 
 /* ============================================================
-   ESTRUCTURA DE MENÚ DINÁMICO Y CONTRASEÑAS
+   ESTRUCTURA DE MENÚ DINÁMICO Y CONTRASEÑAS (AHORA EN LA NUBE)
    ============================================================ */
 const MENU_ORIGINAL = [
     { type: 'link', target: 'home', text: 'Home' },
@@ -40,8 +40,52 @@ const MENU_ORIGINAL = [
     ]}
 ];
 
-let menuData = JSON.parse(localStorage.getItem('menuData')) || MENU_ORIGINAL;
-let contrasenasSecciones = JSON.parse(localStorage.getItem('contrasenasSecciones')) || {};
+let menuData = MENU_ORIGINAL;
+let contrasenasSecciones = {};
+
+// FUNCIÓN DE RESCATE: Descarga de Supabase o rescata del navegador
+async function cargarConfiguracionMenu() {
+    try {
+        const { data, error } = await _supabase.from('configuracion').select('*').eq('id', 1).single();
+        
+        // Revisamos si ya hay datos guardados en la nube
+        let hayDatosEnNube = data && data.menu_data;
+
+        if (hayDatosEnNube) {
+            menuData = data.menu_data;
+            if (data.contrasenas) contrasenasSecciones = data.contrasenas;
+        } else {
+            // Si la nube está vacía, rescatamos los que habías hecho localmente
+            let localMenu = JSON.parse(localStorage.getItem('menuData'));
+            let localPass = JSON.parse(localStorage.getItem('contrasenasSecciones'));
+            
+            if (localMenu) {
+                menuData = localMenu;
+                if (localPass) contrasenasSecciones = localPass;
+                
+                // Los subimos a la nube automáticamente para no perderlos
+                await guardarConfiguracionMenu();
+                console.log("¡Datos locales rescatados y subidos a la nube!");
+            }
+        }
+        renderizarMenu();
+    } catch (e) {
+        console.error("Error al cargar configuración:", e);
+        renderizarMenu();
+    }
+}
+
+async function guardarConfiguracionMenu() {
+    try {
+        await _supabase.from('configuracion').upsert({ 
+            id: 1, 
+            menu_data: menuData, 
+            contrasenas: contrasenasSecciones 
+        });
+    } catch (e) {
+        console.error("Error al guardar el menú en la nube:", e);
+    }
+}
 
 /* ============================================================
    2. NAVEGACIÓN Y CONTROL DE VISTA
@@ -309,14 +353,12 @@ function asegurarSeccionDOM(id, titulo) {
     }
 }
 
-/* --- NUEVA FUNCIÓN PARA ACTUALIZAR EL FORMULARIO DE SUBIDA DINÁMICAMENTE --- */
 function actualizarSelectCategorias() {
     const select = document.getElementById('categoria');
     if (!select) return;
 
     let html = '';
     menuData.forEach(item => {
-        // Ignoramos 'home' y las secciones del administrador para no subir artículos ahí
         if (item.type === 'link' && item.target !== 'home' && !item.target.startsWith('seccion-')) {
             html += `<option value="${item.target}">${item.text}</option>`;
         } else if (item.type === 'dropdown') {
@@ -327,7 +369,6 @@ function actualizarSelectCategorias() {
                 }
             });
             if (optionsHtml !== '') {
-                // Removemos la flechita del nombre principal para que se vea limpio en el grupo
                 html += `<optgroup label="${item.text.replace(' ▾', '')}">${optionsHtml}</optgroup>`;
             }
         }
@@ -372,7 +413,6 @@ function renderizarMenu() {
 
     navUl.innerHTML = menuHtml + loginSubirHtml;
     
-    // Al renderizar el menú, también actualizamos el select del formulario de subida
     actualizarSelectCategorias();
 
     if(adminLogueado) {
@@ -403,7 +443,7 @@ function toggleMenuPass() {
     document.getElementById('menu-pass').style.display = isChecked ? 'block' : 'none';
 }
 
-function agregarElementoMenu() {
+async function agregarElementoMenu() {
     const ubicacion = document.getElementById('menu-ubicacion').value;
     const tipo = document.getElementById('menu-tipo').value;
     const texto = document.getElementById('menu-texto').value;
@@ -420,7 +460,6 @@ function agregarElementoMenu() {
         nuevoElemento.target = idSec;
         if (protegido && pass) {
             contrasenasSecciones[idSec] = { activa: true, password: pass };
-            localStorage.setItem('contrasenasSecciones', JSON.stringify(contrasenasSecciones));
         }
     } else if (tipo === 'dropdown') {
         nuevoElemento.items = [];
@@ -435,15 +474,15 @@ function agregarElementoMenu() {
         }
     }
 
-    localStorage.setItem('menuData', JSON.stringify(menuData));
-    alert("Elemento agregado correctamente. La página ha sido actualizada.");
+    await guardarConfiguracionMenu(); 
+    alert("Elemento agregado correctamente. La página ha sido actualizada para todos.");
     
     document.getElementById('menu-texto').value = '';
     document.getElementById('menu-id-seccion').value = '';
     renderizarMenu();
 }
 
-function eliminarElementoMenu(indexP, indexSub = null) {
+async function eliminarElementoMenu(indexP, indexSub = null) {
     if (!confirm("⚠️ ADVERTENCIA: ¿Estás seguro de que deseas eliminar este elemento del menú?")) return;
     
     if (indexSub !== null) {
@@ -452,22 +491,22 @@ function eliminarElementoMenu(indexP, indexSub = null) {
         menuData.splice(indexP, 1);
     }
     
-    localStorage.setItem('menuData', JSON.stringify(menuData));
+    await guardarConfiguracionMenu(); 
     renderizarMenu();
 }
 
-function editarElementoMenu(indexP, indexSub = null) {
+async function editarElementoMenu(indexP, indexSub = null) {
     let item = (indexSub !== null) ? menuData[indexP].items[indexSub] : menuData[indexP];
     let nuevoTexto = prompt("Modifica el nombre a mostrar:", item.text);
     
     if (nuevoTexto !== null && nuevoTexto.trim() !== "") {
         item.text = nuevoTexto.trim();
-        localStorage.setItem('menuData', JSON.stringify(menuData));
+        await guardarConfiguracionMenu(); 
         renderizarMenu();
     }
 }
 
-function moverElementoMenu(indexP, indexSub, direccion) {
+async function moverElementoMenu(indexP, indexSub, direccion) {
     let arr = (indexSub !== null) ? menuData[indexP].items : menuData;
     let idx = (indexSub !== null) ? indexSub : indexP;
 
@@ -477,11 +516,11 @@ function moverElementoMenu(indexP, indexSub, direccion) {
     arr[idx] = arr[idx + direccion];
     arr[idx + direccion] = temp;
 
-    localStorage.setItem('menuData', JSON.stringify(menuData));
+    await guardarConfiguracionMenu(); 
     renderizarMenu();
 }
 
-function gestionarContrasena(indexP, indexSub = null) {
+async function gestionarContrasena(indexP, indexSub = null) {
     let item = (indexSub !== null) ? menuData[indexP].items[indexSub] : menuData[indexP];
     
     if (item.type !== 'link') return;
@@ -508,7 +547,7 @@ function gestionarContrasena(indexP, indexSub = null) {
         alert("Contraseña guardada y protección activada.");
     }
 
-    localStorage.setItem('contrasenasSecciones', JSON.stringify(contrasenasSecciones));
+    await guardarConfiguracionMenu(); 
     renderizarMenu(); 
 }
 
@@ -565,7 +604,7 @@ function renderizarAdminMenuLista() {
     lista.innerHTML = html;
 }
 
-// Inicializar el menú al cargar la página
+// INICIALIZADOR
 document.addEventListener('DOMContentLoaded', () => {
-    renderizarMenu();
+    cargarConfiguracionMenu();
 });
