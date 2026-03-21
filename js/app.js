@@ -442,6 +442,45 @@ async function cargarArticulosDesdeNube(categoria) {
    4. GESTIÓN DE DATOS (ESCRITURA - CUD)
    ============================================================ */
 
+function sanitizarNombreArchivo(nombreOriginal) {
+    const nombreNormalizado = nombreOriginal
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/[^a-zA-Z0-9._-]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/-+/g, '-')
+        .replace(/^[_.-]+|[_.-]+$/g, '');
+
+    const partes = nombreNormalizado.split('.');
+    if (partes.length <= 1) return nombreNormalizado || 'archivo_pdf';
+
+    const extension = partes.pop().toLowerCase().replace(/[^a-z0-9]/g, '');
+    const base = partes.join('.').replace(/[^a-zA-Z0-9_-]/g, '_').replace(/^[_-]+|[_-]+$/g, '');
+    return `${base || 'archivo_pdf'}.${extension || 'pdf'}`;
+}
+
+async function subirPdfASupabase(file) {
+    const nombreSeguro = sanitizarNombreArchivo(file.name);
+    const path = `${Date.now()}_${nombreSeguro}`;
+
+    try {
+        const { error } = await _supabase.storage.from('pdfs').upload(path, file, {
+            cacheControl: '3600',
+            upsert: false
+        });
+
+        if (error) {
+            throw new Error(`No se pudo subir el PDF. ${error.message}`);
+        }
+
+        return _supabase.storage.from('pdfs').getPublicUrl(path).data.publicUrl;
+    } catch (error) {
+        console.error('Error al subir PDF a Supabase:', error);
+        throw new Error('Falló la carga del PDF. Verifica el nombre del archivo, tu conexión o las políticas RLS del bucket pdfs. Detalle: ' + error.message);
+    }
+}
+
 document.getElementById('formArticulo').addEventListener('submit', async function (e) {
     e.preventDefault();
     const cat = document.getElementById('categoria').value;
@@ -453,10 +492,7 @@ document.getElementById('formArticulo').addEventListener('submit', async functio
 
     try {
         if (file) {
-            const path = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
-            const { error: upErr } = await _supabase.storage.from('pdfs').upload(path, file);
-            if (upErr) throw upErr;
-            urlPublica = _supabase.storage.from('pdfs').getPublicUrl(path).data.publicUrl;
+            urlPublica = await subirPdfASupabase(file);
         }
 
         const payload = {
