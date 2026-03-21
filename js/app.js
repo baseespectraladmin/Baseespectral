@@ -144,7 +144,8 @@ async function guardarConfiguracionMenu() {
    ============================================================ */
 
 function mostrarSeccion(id) {
-    if (contrasenasSecciones[id] && contrasenasSecciones[id].activa) {
+    // MODIFICACIÓN APLICADA: Si es administrador, pasa directamente.
+    if (!adminLogueado && contrasenasSecciones[id] && contrasenasSecciones[id].activa) {
         const pass = prompt('Esta sección requiere contraseña para acceder:');
         if (pass !== contrasenasSecciones[id].password) {
             alert('Acceso denegado: Contraseña incorrecta.');
