@@ -300,3 +300,175 @@ input:focus {
     filter: brightness(1.05);
     transform: translateY(-2px);
 }
+/* =========================================
+   6. SERIES DE ARTÍCULOS RELACIONADOS
+   ========================================= */
+.relacionado-toggle {
+    margin: 10px 0 16px;
+    padding: 12px 14px;
+    background: #eef6ff;
+    border: 1px solid #cfe3ff;
+    border-radius: 12px;
+}
+
+.relacionado-toggle label {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-weight: 600;
+    color: var(--azul-oscuro);
+}
+
+.bloque-relacionados {
+    margin-bottom: 16px;
+    padding: 16px;
+    border: 1px dashed #9dbddd;
+    border-radius: 14px;
+    background: #f8fbff;
+}
+
+.ayuda-relacionados {
+    margin-top: 8px;
+    color: var(--gris);
+    font-size: 0.95rem;
+}
+
+.articulo-main-info,
+.serie-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.articulo-actions-inline,
+.admin-actions-row,
+.serie-header-actions,
+.related-admin-actions,
+.articulo-links-row,
+.principal-links,
+.related-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.related-counter {
+    margin-top: 8px;
+    color: var(--azul-medio);
+    font-weight: 600;
+}
+
+.btn-outline,
+.admin-actions-row button,
+.related-admin-actions button,
+.btn-secundario {
+    border: 1px solid var(--azul-claro);
+    background: white;
+    color: var(--azul-medio);
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.admin-actions-row .danger,
+.related-admin-actions .danger {
+    border-color: #e74c3c;
+    color: #e74c3c;
+}
+
+.articulo-link {
+    color: var(--azul-medio);
+    text-decoration: none;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #eef6ff;
+}
+
+.articulo-link-sec {
+    background: #edf9f0;
+    color: #1d8f4d;
+}
+
+.detalle-articulo {
+    max-width: 1100px;
+}
+
+.serie-badge {
+    display: inline-block;
+    margin-bottom: 10px;
+    background: #e7f6ec;
+    color: #1d8f4d;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.related-tree {
+    margin-top: 30px;
+    background: white;
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+}
+
+.related-tree h3 {
+    margin-bottom: 18px;
+    color: var(--azul-oscuro);
+}
+
+.related-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.related-item {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 18px 18px 18px 34px;
+    border-radius: 14px;
+    background: #f8fbff;
+    border: 1px solid #d9e8f5;
+    flex-wrap: wrap;
+}
+
+.related-item::before {
+    content: '╰─›';
+    position: absolute;
+    left: 12px;
+    top: 18px;
+    color: var(--azul-claro);
+    font-weight: 700;
+}
+
+.related-item > div:first-child {
+    display: flex;
+    gap: 12px;
+    flex: 1;
+}
+
+.related-bullet {
+    min-width: 28px;
+    font-weight: 700;
+    color: var(--azul-medio);
+}
+
+.sin-relacionados {
+    color: var(--gris);
+}
+
+@media (max-width: 768px) {
+    .related-item,
+    .articulo-main-info,
+    .serie-header {
+        flex-direction: column;
+    }
+}
