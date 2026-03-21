@@ -156,10 +156,13 @@
             </div>
 
             <div id="bloque-relacionados" class="bloque-relacionados" style="display: none;">
-                <label>Artículo principal:</label>
-                <input type="text" id="articulo-padre" readonly placeholder="Selecciona la publicación principal desde el listado de artículos">
+                <label for="articulo-padre">Artículo principal:</label>
+                <select id="articulo-padre">
+                    <option value="">Cargando publicaciones...</option>
+                </select>
                 <input type="hidden" id="relacionado-id">
-                <p class="ayuda-relacionados">Usa el botón <strong>Agregar dentro</strong> o <strong>Agregar relacionado</strong> desde una publicación para enlazar este nuevo material.</p>
+                <p id="articulo-padre-resumen" class="resumen-padre">Selecciona la publicación principal desde el listado de artículos.</p>
+                <p class="ayuda-relacionados">También puedes entrar a una publicación ya publicada y usar <strong>Agregar dentro</strong> o <strong>Agregar relacionado</strong>.</p>
             </div>
 
             <button type="submit" class="btn-subir">Guardar en Base espectral</button>

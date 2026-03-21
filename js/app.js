@@ -16,6 +16,8 @@ let contrasenasSecciones = {};
 let articulosRelacionados = {};
 let articuloPrincipalActivo = null;
 let editandoRelacionado = null;
+let articulosCache = [];
+let categoriaActivaListado = null;
 
 /* ============================================================
    ESTRUCTURA DE MENÚ DINÁMICO Y CONTRASEÑAS (AHORA EN LA NUBE)
@@ -176,6 +178,58 @@ function ajustarTipoEntrada() {
     }
 }
 
+function actualizarResumenArticuloPadre() {
+    const select = document.getElementById('articulo-padre');
+    const resumen = document.getElementById('articulo-padre-resumen');
+    if (!select || !resumen) return;
+
+    const opcion = select.options[select.selectedIndex];
+    resumen.textContent = opcion && opcion.value
+        ? `Publicación principal seleccionada: ${opcion.textContent}`
+        : 'Selecciona la publicación principal desde el listado de artículos.';
+}
+
+async function cargarOpcionesArticulosPrincipales(categoriaPreferida = '', selectedId = '') {
+    const select = document.getElementById('articulo-padre');
+    if (!select) return;
+
+    try {
+        if (!articulosCache.length) {
+            const { data, error } = await _supabase
+                .from('articulos')
+                .select('*')
+                .order('categoria', { ascending: true })
+                .order('anio', { ascending: false })
+                .order('mes', { ascending: false })
+                .order('dia', { ascending: false });
+            if (error) throw error;
+            articulosCache = data || [];
+        }
+
+        const articulosFiltrados = categoriaPreferida
+            ? articulosCache.filter(art => art.categoria === categoriaPreferida)
+            : articulosCache;
+
+        if (!articulosFiltrados.length) {
+            select.innerHTML = '<option value="">No hay publicaciones principales disponibles todavía</option>';
+            actualizarResumenArticuloPadre();
+            return;
+        }
+
+        select.innerHTML = '<option value="">Selecciona una publicación principal</option>' + articulosFiltrados
+            .map(art => `<option value="${art.id}">${escaparHtml(art.titulo)} — ${obtenerFechaTexto(art)} (${escaparHtml(art.categoria)})</option>`)
+            .join('');
+
+        if (selectedId) select.value = selectedId;
+        if (!select.value && articulosFiltrados[0]) select.value = articulosFiltrados[0].id;
+        actualizarResumenArticuloPadre();
+    } catch (error) {
+        console.error('No se pudieron cargar publicaciones principales:', error);
+        select.innerHTML = '<option value="">Error al cargar publicaciones principales</option>';
+        actualizarResumenArticuloPadre();
+    }
+}
+
 function toggleFormularioRelacionado(mostrar = false) {
     const bloque = document.getElementById('bloque-relacionados');
     if (!bloque) return;
@@ -186,7 +240,11 @@ function toggleFormularioRelacionado(mostrar = false) {
         document.getElementById('articulo-padre').value = '';
         document.getElementById('relacionado-id').value = '';
         editandoRelacionado = null;
+        actualizarResumenArticuloPadre();
+        return;
     }
+
+    cargarOpcionesArticulosPrincipales(document.getElementById('categoria').value, document.getElementById('articulo-padre').value);
 }
 
 function cambiarModoRelacionado() {
@@ -194,16 +252,35 @@ function cambiarModoRelacionado() {
     toggleFormularioRelacionado(activo);
 }
 
-function prepararAltaRelacionado(articulo) {
+function abrirFormularioNuevoPrincipal(categoria = '') {
+    reiniciarFormularioArticulo();
+    if (categoria) document.getElementById('categoria').value = categoria;
+    ajustarTipoEntrada();
+    mostrarSeccion('seccion-subir');
+}
+
+async function abrirFormularioRelacionadoDesdeListado(categoria = '') {
+    reiniciarFormularioArticulo();
     document.getElementById('modo-relacionado').checked = true;
+    if (categoria) document.getElementById('categoria').value = categoria;
     toggleFormularioRelacionado(true);
-    document.getElementById('articulo-padre').value = articulo.id;
+    await cargarOpcionesArticulosPrincipales(document.getElementById('categoria').value);
+    document.getElementById('titulo-form').innerText = 'Agregar artículo relacionado dentro de una publicación';
+    document.querySelector('#formArticulo .btn-subir').innerText = 'Guardar artículo relacionado';
+    ajustarTipoEntrada();
+    mostrarSeccion('seccion-subir');
+}
+
+async function prepararAltaRelacionado(articulo) {
+    document.getElementById('modo-relacionado').checked = true;
     document.getElementById('categoria').value = articulo.categoria;
     document.getElementById('relacionado-id').value = '';
     editandoRelacionado = null;
-    ajustarTipoEntrada();
+    toggleFormularioRelacionado(true);
+    await cargarOpcionesArticulosPrincipales(articulo.categoria, articulo.id);
     document.getElementById('titulo-form').innerText = `Agregar material relacionado a: ${articulo.titulo}`;
     document.querySelector('#formArticulo .btn-subir').innerText = 'Guardar artículo relacionado';
+    ajustarTipoEntrada();
     mostrarSeccion('seccion-subir');
 }
 
@@ -300,6 +377,7 @@ async function cargarArticulosDesdeNube(categoria) {
     const contenedor = document.getElementById('lista-' + categoria);
     if (!contenedor) return;
 
+    categoriaActivaListado = categoria;
     contenedor.innerHTML = '<p style="padding: 20px; color: var(--gris);">Consultando base de datos espectral...</p>';
 
     try {
@@ -313,7 +391,19 @@ async function cargarArticulosDesdeNube(categoria) {
 
         if (error) throw error;
 
-        contenedor.innerHTML = data.length === 0 ? '<p style="padding: 20px;">Sin registros en esta categoría.</p>' : '';
+        articulosCache = [
+            ...articulosCache.filter(art => art.categoria !== categoria),
+            ...data
+        ];
+
+        const toolbarHtml = adminLogueado ? `
+            <div class="admin-toolbar-lista">
+                <button class="btn-outline" onclick="abrirFormularioNuevoPrincipal('${categoria}')">➕ Nuevo artículo principal</button>
+                <button class="btn-outline" onclick="abrirFormularioRelacionadoDesdeListado('${categoria}')">📚 Agregar relacionado en esta lista</button>
+            </div>
+        ` : '';
+
+        contenedor.innerHTML = toolbarHtml + (data.length === 0 ? '<p style="padding: 20px;">Sin registros en esta categoría.</p>' : '');
 
         data.forEach(art => {
             const item = document.createElement('div');
@@ -417,6 +507,8 @@ document.getElementById('formArticulo').addEventListener('submit', async functio
             return;
         }
 
+        articulosCache = [];
+
         if (editandoId) {
             const { error } = await _supabase.from('articulos').update(payload).eq('id', editandoId);
             if (error) throw error;
@@ -452,7 +544,7 @@ function prepararEdicion(art) {
     mostrarSeccion('seccion-subir');
 }
 
-function editarRelacionado(parentId, relacionadoId) {
+async function editarRelacionado(parentId, relacionadoId) {
     const relacionado = obtenerRelacionados(parentId).find(rel => rel.id === relacionadoId);
     const principal = articuloPrincipalActivo;
     if (!relacionado) return;
@@ -467,9 +559,9 @@ function editarRelacionado(parentId, relacionadoId) {
     document.getElementById('categoria').value = relacionado.categoria || principal?.categoria || '';
     document.getElementById('enlace_externo').value = relacionado.enlace_externo || '';
     document.getElementById('modo-relacionado').checked = true;
-    document.getElementById('articulo-padre').value = parentId;
     document.getElementById('relacionado-id').value = relacionadoId;
     toggleFormularioRelacionado(true);
+    await cargarOpcionesArticulosPrincipales(relacionado.categoria || principal?.categoria || '', parentId);
     ajustarTipoEntrada();
     document.getElementById('titulo-form').innerText = `Editar relacionado de: ${principal?.titulo || 'publicación principal'}`;
     document.querySelector('#formArticulo .btn-subir').innerText = 'Actualizar artículo relacionado';
@@ -869,4 +961,11 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarConfiguracionMenu();
     ajustarTipoEntrada();
     toggleFormularioRelacionado(false);
+    document.getElementById('articulo-padre').addEventListener('change', actualizarResumenArticuloPadre);
+    document.getElementById('categoria').addEventListener('change', () => {
+        ajustarTipoEntrada();
+        if (document.getElementById('modo-relacionado').checked) {
+            cargarOpcionesArticulosPrincipales(document.getElementById('categoria').value);
+        }
+    });
 });

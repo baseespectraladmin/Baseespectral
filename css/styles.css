@@ -333,6 +333,29 @@ input:focus {
     font-size: 0.95rem;
 }
 
+.bloque-relacionados select {
+    width: 100%;
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1px solid #56a3ff;
+    background: white;
+    color: var(--texto);
+    font-size: 1rem;
+}
+
+.resumen-padre {
+    margin-top: 10px;
+    color: var(--azul-medio);
+    font-weight: 600;
+}
+
+.admin-toolbar-lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
 .articulo-main-info,
 .serie-header {
     display: flex;
