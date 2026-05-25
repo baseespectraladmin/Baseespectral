@@ -1075,8 +1075,10 @@ async function inicializarGraficaFluo() {
         
         const layout = {
             title: '<b>Espectro de Fluorescencia (Cera Roja) - UPT</b>',
-            xaxis: { title: 'Longitud de onda (nm)', gridcolor: '#e2e8f0', range: [400, 800] },
-            yaxis: { title: 'Fluorescencia (%)', gridcolor: '#e2e8f0', range: [0, 100] },
+            // MODIFICACIÓN: Rango estricto en X (0 a 750)
+            xaxis: { title: 'Longitud de onda (nm)', gridcolor: '#e2e8f0', range: [0, 750] },
+            // MODIFICACIÓN: Rango estricto en Y (0 a 60000)
+            yaxis: { title: 'Intensidad de Fluorescencia', gridcolor: '#e2e8f0', range: [0, 60000] },
             paper_bgcolor: '#fcfdfe', plot_bgcolor: '#ffffff', hovermode: false, showlegend: false, margin: { l: 60, r: 30, t: 80, b: 60 }
         };
 
@@ -1097,19 +1099,33 @@ async function inicializarGraficaFluo() {
             const fl = gd._fullLayout;
             const l = fl.margin.l, t = fl.margin.t;
             const plotW = rect.width - (l + fl.margin.r), plotH = rect.height - (t + fl.margin.b);
-            const dataX = 400 + ((ev.clientX - rect.left - l) / plotW) * 400;
+            
+            // MODIFICACIÓN: Interpolación del ratón ajustada para X de 0 a 750
+            const dataX = 0 + ((ev.clientX - rect.left - l) / plotW) * 750;
 
-            if (dataX >= 400 && dataX <= 800) {
+            if (dataX >= 0 && dataX <= 750) {
                 const yInterp = interpY(dataX);
                 Plotly.restyle(gd, { x: [[dataX]], y: [[yInterp]] }, [1]);
                 if (lambdaSpan) lambdaSpan.textContent = dataX.toFixed(2);
                 if (reflSpan) reflSpan.textContent = yInterp.toFixed(2);
                 if (tooltip) {
-                    tooltip.style.left = (l + ((dataX - 400) / 400) * plotW) + 'px';
-                    tooltip.style.top = (t + (1 - (yInterp / 100)) * plotH - 25) + 'px';
+                    tooltip.style.left = (l + ((dataX - 0) / 750) * plotW) + 'px';
+                    
+                    // Aseguramos que la etiqueta no salga flotando si el pico pasa de 60k
+                    let yPos = yInterp;
+                    if (yPos > 60000) yPos = 60000;
+                    if (yPos < 0) yPos = 0;
+
+                    // MODIFICACIÓN: Interpolación del ratón ajustada para Y de 0 a 60000
+                    tooltip.style.top = (t + (1 - (yPos / 60000)) * plotH - 25) + 'px';
                     tooltip.style.display = 'block';
                 }
             }
+        });
+        
+        // (Opcional pero recomendado) Oculta el tooltip al salir de la gráfica
+        gd.addEventListener('mouseleave', () => {
+            if(tooltip) tooltip.style.display = 'none';
         });
     } catch (e) {
         console.error('Error en motor de gráfica:', e);
