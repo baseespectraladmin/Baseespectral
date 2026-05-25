@@ -22,6 +22,7 @@
                     <div class="dropdown">
                         <a onclick="mostrarSeccion('espectros-absorbancia'); toggleMenu()">Espectros de absorbancia</a>
                         <a onclick="mostrarSeccion('espectros-reflexion'); toggleMenu()">Espectros de reflexión difusa</a>
+                        <a onclick="mostrarSeccion('espectros-fluorescencia'); toggleMenu()">Espectros de fluorescencia</a>
                     </div>
                 </li>
                 <li class="has-dropdown">
@@ -224,6 +225,26 @@
                 <div style="position:relative; z-index:2; padding:10px; color:#000; font-weight:600; text-align:center; background:rgba(255,255,255,0.4);">
                     <div>λ: <span id="lambda-value">--</span> nm</div>
                     <div>Ref: <span id="refl-value">--</span> %</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="espectros-fluorescencia" class="seccion-contenido container">
+    <h1>Espectros de Fluorescencia</h1><hr>
+    <div style="position: relative; width: 100%; margin-top: 20px;">
+        <div id="grafica-fluorescencia" style="width:100%; height:500px; background: white; border-radius: 15px;"></div>
+        <div id="custom-tooltip-fluo" style="position:absolute; pointer-events:none; display:none; transform: translate(-50%, -115%); z-index:1000;">
+            <div style="width:240px; height:65px; border-radius:8px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.25); position:relative;">
+                <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex;">
+                    <div style="width:33.3%; background:#006847;"></div>
+                    <div style="width:33.3%; background:#ffffff;"></div>
+                    <div style="width:33.3%; background:#ce1126;"></div>
+                </div>
+                <div style="position:relative; z-index:2; padding:10px; color:#000; font-weight:600; text-align:center; background:rgba(255,255,255,0.4);">
+                    <div>λ: <span id="lambda-value-fluo">--</span> nm</div>
+                    <div>Fluo: <span id="fluo-value">--</span> %</div>
                 </div>
             </div>
         </div>

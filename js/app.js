@@ -18,6 +18,10 @@ let articuloPrincipalActivo = null;
 let editandoRelacionado = null;
 let articulosCache = [];
 let categoriaActivaListado = null;
+let adminLogueado = false;
+let editandoId = null;
+let graficaCargada = false;
+let graficaFluoCargada = false; // Bandera para la nueva gráfica
 
 /* ============================================================
    ESTRUCTURA DE MENÚ DINÁMICO Y CONTRASEÑAS (AHORA EN LA NUBE)
@@ -26,7 +30,8 @@ const MENU_ORIGINAL = [
     { type: 'link', target: 'home', text: 'Home' },
     { type: 'dropdown', text: 'Espectros ▾', items: [
         { type: 'link', target: 'espectros-absorbancia', text: 'Espectros de absorbancia' },
-        { type: 'link', target: 'espectros-reflexion', text: 'Espectros de reflexión difusa' }
+        { type: 'link', target: 'espectros-reflexion', text: 'Espectros de reflexión difusa' },
+        { type: 'link', target: 'espectros-fluorescencia', text: 'Espectros de fluorescencia' }
     ]},
     { type: 'dropdown', text: 'Artículos ▾', items: [
         { type: 'link', target: 'art-difusion', text: 'Artículos de difusión' },
@@ -166,6 +171,7 @@ function mostrarSeccion(id) {
     }
 
     if (id === 'espectros-reflexion' && !graficaCargada) inicializarGrafica();
+    if (id === 'espectros-fluorescencia' && !graficaFluoCargada) inicializarGraficaFluo();
 }
 
 function ajustarTipoEntrada() {
@@ -1006,3 +1012,75 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+/* ============================================================
+   GRÁFICA DE FLUORESCENCIA (Cera Roja)
+   ============================================================ */
+async function inicializarGraficaFluo() {
+    const gd = document.getElementById('grafica-fluorescencia');
+    const tooltip = document.getElementById('custom-tooltip-fluo');
+    const lambdaSpan = document.getElementById('lambda-value-fluo');
+    const reflSpan = document.getElementById('fluo-value');
+    if (!gd) return;
+
+    try {
+        // Leemos del archivo csv exclusivo para cera roja
+        const resp = await fetch('css/data/fluorescencia.csv');
+        const texto = await resp.text();
+        const filas = texto.trim().split('\n').filter(l => l.trim() !== '');
+        const wavelength = [], reflectancia = [];
+
+        filas.slice(1).forEach(l => {
+            const cols = l.split(/,|\t|;/).map(s => s.trim());
+            const w = parseFloat(cols[0]), r = parseFloat(cols[1]);
+            if (!isNaN(w) && !isNaN(r)) {
+                wavelength.push(w);
+                reflectancia.push(r);
+            }
+        });
+
+        const trace = { x: wavelength, y: reflectancia, mode: 'lines', line: { color: '#3282b8', width: 2.5, shape: 'spline' }, hoverinfo: 'none' };
+        const hoverTrace = { x: [0], y: [0], mode: 'markers', marker: { size: 12, color: '#006847', line: { width: 3, color: '#ffffff' } }, hoverinfo: 'none' };
+        
+        const layout = {
+            title: '<b>Espectro de Fluorescencia (Cera Roja) - UPT</b>',
+            xaxis: { title: 'Longitud de onda (nm)', gridcolor: '#e2e8f0', range: [400, 800] },
+            yaxis: { title: 'Fluorescencia (%)', gridcolor: '#e2e8f0', range: [0, 100] },
+            paper_bgcolor: '#fcfdfe', plot_bgcolor: '#ffffff', hovermode: false, showlegend: false, margin: { l: 60, r: 30, t: 80, b: 60 }
+        };
+
+        await Plotly.newPlot(gd, [trace, hoverTrace], layout, { responsive: true, displayModeBar: false });
+        graficaFluoCargada = true;
+
+        function interpY(x) {
+            if (x <= wavelength[0]) return reflectancia[0];
+            if (x >= wavelength[wavelength.length - 1]) return reflectancia[reflectancia.length - 1];
+            let i = 1;
+            while (i < wavelength.length && x > wavelength[i]) i++;
+            const x1 = wavelength[i - 1], x2 = wavelength[i], y1 = reflectancia[i - 1], y2 = reflectancia[i];
+            return y1 + ((x - x1) / (x2 - x1)) * (y2 - y1);
+        }
+
+        gd.addEventListener('mousemove', (ev) => {
+            const rect = gd.getBoundingClientRect();
+            const fl = gd._fullLayout;
+            const l = fl.margin.l, t = fl.margin.t;
+            const plotW = rect.width - (l + fl.margin.r), plotH = rect.height - (t + fl.margin.b);
+            const dataX = 400 + ((ev.clientX - rect.left - l) / plotW) * 400;
+
+            if (dataX >= 400 && dataX <= 800) {
+                const yInterp = interpY(dataX);
+                Plotly.restyle(gd, { x: [[dataX]], y: [[yInterp]] }, [1]);
+                if (lambdaSpan) lambdaSpan.textContent = dataX.toFixed(2);
+                if (reflSpan) reflSpan.textContent = yInterp.toFixed(2);
+                if (tooltip) {
+                    tooltip.style.left = (l + ((dataX - 400) / 400) * plotW) + 'px';
+                    tooltip.style.top = (t + (1 - (yInterp / 100)) * plotH - 25) + 'px';
+                    tooltip.style.display = 'block';
+                }
+            }
+        });
+    } catch (e) {
+        console.error('Error en motor de gráfica:', e);
+    }
+}
