@@ -101,7 +101,41 @@ async function cargarConfiguracionMenu() {
             menuData = data.menu_data;
             if (data.contrasenas) contrasenasSecciones = data.contrasenas;
             articulosRelacionados = normalizarRelacionados(data.articulos_relacionados || {});
+
+            // --- INICIO DE SINCRONIZACIÓN INTELIGENTE ---
+            // Compara el código original (MENU_ORIGINAL) con la nube y fusiona lo que falte
+            let huboCambios = false;
+            MENU_ORIGINAL.forEach((itemBase, i) => {
+                let itemNube = menuData.find(n => n.text === itemBase.text);
+                
+                if (!itemNube) {
+                    // Si falta una pestaña principal en la nube, se inyecta
+                    menuData.splice(i, 0, itemBase);
+                    huboCambios = true;
+                } else if (itemBase.type === 'dropdown' && itemBase.items) {
+                    // Si es un menú desplegable, verificamos que no falten sub-pestañas
+                    itemBase.items.forEach((subBase, j) => {
+                        let subNube = itemNube.items.find(s => 
+                            (s.target && subBase.target && s.target === subBase.target) || 
+                            (s.text === subBase.text)
+                        );
+                        if (!subNube) {
+                            // Inyecta específicamente la sub-pestaña que falta (ej. fluorescencia)
+                            itemNube.items.splice(j, 0, subBase);
+                            huboCambios = true;
+                        }
+                    });
+                }
+            });
+
+            // Si detectó que inyectó código nuevo a la configuración, actualiza la nube silenciosamente
+            if (huboCambios) {
+                await guardarConfiguracionMenu(); 
+            }
+            // --- FIN DE SINCRONIZACIÓN INTELIGENTE ---
+
         } else {
+            // Rescate de configuración local si la nube está vacía
             const localMenu = JSON.parse(localStorage.getItem('menuData'));
             const localPass = JSON.parse(localStorage.getItem('contrasenasSecciones'));
             const localRelacionados = JSON.parse(localStorage.getItem('articulosRelacionados') || '{}');
