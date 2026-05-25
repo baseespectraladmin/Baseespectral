@@ -18,9 +18,6 @@ let articuloPrincipalActivo = null;
 let editandoRelacionado = null;
 let articulosCache = [];
 let categoriaActivaListado = null;
-let adminLogueado = false;
-let editandoId = null;
-let graficaCargada = false;
 let graficaFluoCargada = false; // Bandera para la nueva gráfica
 
 /* ============================================================
