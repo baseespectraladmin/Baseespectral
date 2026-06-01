@@ -1119,33 +1119,69 @@ async function inicializarGraficaFluo() {
             if(tooltip) tooltip.style.display = 'none';
         });
 
-        // --- 2. GRÁFICA NOPAL (ACTUALIZADA) ---
+// --- 2. GRÁFICA NOPAL (CON LECTURA TIPO MATLAB) ---
         const gdNopal = document.getElementById('grafica-fluorescencia-nopal');
         const tooltipNopal = document.getElementById('custom-tooltip-fluo-nopal');
         const lambdaSpanNopal = document.getElementById('lambda-value-fluo-nopal');
         const reflSpanNopal = document.getElementById('fluo-value-nopal');
 
         if (gdNopal) {
-            const respN = await fetch('css/data/NPG3.csv'); // Nombre del archivo actualizado
+            // 1. Apuntamos directamente al archivo .txt original
+            const respN = await fetch('css/data/NPG3.txt'); 
             const textoN = await respN.text();
-            const filasN = textoN.trim().split('\n').filter(l => l.trim() !== '');
+            const filasN = textoN.trim().split('\n');
             const wavelengthN = [], reflectanciaN = [];
 
-            filasN.slice(1).forEach(l => {
-                const cols = l.split(/,|\t|;/).map(s => s.trim());
-                const w = parseFloat(cols[0]), r = parseFloat(cols[1]);
-                if (!isNaN(w) && !isNaN(r)) {
-                    wavelengthN.push(w);
-                    reflectanciaN.push(r);
+            let headerFound = false;
+            let waveIdx = 1; // Índice por defecto para Wavelength (Columna 2)
+            let rawIdx = 2;  // Índice por defecto para Raw Data (Columna 3)
+
+            // 2. Procesamiento de líneas al igual que en MATLAB
+            filasN.forEach(linea => {
+                const line = linea.trim();
+                if (!line) return;
+
+                // Ignorar metadatos hasta encontrar la cabecera
+                if (!headerFound) {
+                    if (line.toLowerCase().startsWith('pixel;wavelength')) {
+                        headerFound = true;
+                        const headers = line.split(';');
+                        
+                        // Localización dinámica de las columnas
+                        const foundWave = headers.findIndex(h => h.toLowerCase().includes('wavelength'));
+                        if (foundWave !== -1) waveIdx = foundWave;
+                        
+                        const foundRaw = headers.findIndex(h => h.toLowerCase().includes('raw'));
+                        if (foundRaw !== -1) rawIdx = foundRaw;
+                    }
+                    return;
+                }
+
+                // 3. Extracción de datos y conversión de texto a número
+                const cols = line.split(';');
+                if (cols.length > Math.max(waveIdx, rawIdx)) {
+                    // Reemplazo de comas por puntos para evitar NaN
+                    const wStr = cols[waveIdx].replace(',', '.');
+                    const rStr = cols[rawIdx].replace(',', '.');
+                    
+                    const w = parseFloat(wStr);
+                    const r = parseFloat(rStr);
+
+                    // Limpieza de valores nulos o vacíos
+                    if (!isNaN(w) && !isNaN(r)) {
+                        wavelengthN.push(w);
+                        reflectanciaN.push(r);
+                    }
                 }
             });
 
-            const traceN = { x: wavelengthN, y: reflectanciaN, mode: 'lines', line: { color: '#3282b8', width: 2.5, shape: 'spline' }, hoverinfo: 'none' };
+            // Color de línea ajustado al verde brillante de tu script de MATLAB
+            const traceN = { x: wavelengthN, y: reflectanciaN, mode: 'lines', line: { color: '#1aff1a', width: 2.5, shape: 'spline' }, hoverinfo: 'none' };
             const hoverTraceN = { x: [0], y: [0], mode: 'markers', marker: { size: 12, color: '#006847', line: { width: 3, color: '#ffffff' } }, hoverinfo: 'none' };
             
             const layoutN = {
                 title: '<b>Espectro de Fluorescencia (Nopal) - UPT</b>',
-                xaxis: { title: 'Longitud de onda (nm)', gridcolor: '#e2e8f0', range: [450, 800] }, // Rango del eje X modificado
+                xaxis: { title: 'Longitud de onda (nm)', gridcolor: '#e2e8f0', range: [450, 800] },
                 yaxis: { title: 'Intensidad de Fluorescencia', gridcolor: '#e2e8f0', range: [0, 65000] },
                 paper_bgcolor: '#fcfdfe', plot_bgcolor: '#ffffff', hovermode: false, showlegend: false, margin: { l: 60, r: 30, t: 80, b: 60 }
             };
@@ -1167,7 +1203,6 @@ async function inicializarGraficaFluo() {
                 const l = fl.margin.l, t = fl.margin.t;
                 const plotW = rect.width - (l + fl.margin.r), plotH = rect.height - (t + fl.margin.b);
                 
-                // Mapeo ajustado: Inicio en 450 y ancho total de 350 unidades (800 - 450)
                 const dataX = 450 + ((ev.clientX - rect.left - l) / plotW) * 350;
 
                 if (dataX >= 450 && dataX <= 800) {
@@ -1176,7 +1211,6 @@ async function inicializarGraficaFluo() {
                     if (lambdaSpanNopal) lambdaSpanNopal.textContent = dataX.toFixed(2);
                     if (reflSpanNopal) reflSpanNopal.textContent = yInterp.toFixed(2);
                     if (tooltipNopal) {
-                        // Posición del tooltip calculada con base en la escala de 450 a 800
                         tooltipNopal.style.left = (l + ((dataX - 450) / 350) * plotW) + 'px';
                         let yPos = yInterp;
                         if (yPos > 65000) yPos = 65000;
@@ -1191,10 +1225,3 @@ async function inicializarGraficaFluo() {
                 if(tooltipNopal) tooltipNopal.style.display = 'none';
             });
         }
-
-        graficaFluoCargada = true;
-
-    } catch (e) {
-        console.error('Error en motor de gráfica:', e);
-    }
-}
