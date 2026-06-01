@@ -1119,14 +1119,14 @@ async function inicializarGraficaFluo() {
             if(tooltip) tooltip.style.display = 'none';
         });
 
-        // --- 2. GRÁFICA NOPAL ---
+        // --- 2. GRÁFICA NOPAL (ACTUALIZADA) ---
         const gdNopal = document.getElementById('grafica-fluorescencia-nopal');
         const tooltipNopal = document.getElementById('custom-tooltip-fluo-nopal');
         const lambdaSpanNopal = document.getElementById('lambda-value-fluo-nopal');
         const reflSpanNopal = document.getElementById('fluo-value-nopal');
 
         if (gdNopal) {
-            const respN = await fetch('css/data/NPG3.csv');
+            const respN = await fetch('css/data/NPG3.csv'); // Nombre del archivo actualizado
             const textoN = await respN.text();
             const filasN = textoN.trim().split('\n').filter(l => l.trim() !== '');
             const wavelengthN = [], reflectanciaN = [];
@@ -1145,7 +1145,7 @@ async function inicializarGraficaFluo() {
             
             const layoutN = {
                 title: '<b>Espectro de Fluorescencia (Nopal) - UPT</b>',
-                xaxis: { title: 'Longitud de onda (nm)', gridcolor: '#e2e8f0', range: [300, 700] },
+                xaxis: { title: 'Longitud de onda (nm)', gridcolor: '#e2e8f0', range: [450, 800] }, // Rango del eje X modificado
                 yaxis: { title: 'Intensidad de Fluorescencia', gridcolor: '#e2e8f0', range: [0, 65000] },
                 paper_bgcolor: '#fcfdfe', plot_bgcolor: '#ffffff', hovermode: false, showlegend: false, margin: { l: 60, r: 30, t: 80, b: 60 }
             };
@@ -1166,15 +1166,18 @@ async function inicializarGraficaFluo() {
                 const fl = gdNopal._fullLayout;
                 const l = fl.margin.l, t = fl.margin.t;
                 const plotW = rect.width - (l + fl.margin.r), plotH = rect.height - (t + fl.margin.b);
-                const dataX = 300 + ((ev.clientX - rect.left - l) / plotW) * 400;
+                
+                // Mapeo ajustado: Inicio en 450 y ancho total de 350 unidades (800 - 450)
+                const dataX = 450 + ((ev.clientX - rect.left - l) / plotW) * 350;
 
-                if (dataX >= 300 && dataX <= 700) {
+                if (dataX >= 450 && dataX <= 800) {
                     const yInterp = interpYN(dataX);
                     Plotly.restyle(gdNopal, { x: [[dataX]], y: [[yInterp]] }, [1]);
                     if (lambdaSpanNopal) lambdaSpanNopal.textContent = dataX.toFixed(2);
                     if (reflSpanNopal) reflSpanNopal.textContent = yInterp.toFixed(2);
                     if (tooltipNopal) {
-                        tooltipNopal.style.left = (l + ((dataX - 300) / 400) * plotW) + 'px';
+                        // Posición del tooltip calculada con base en la escala de 450 a 800
+                        tooltipNopal.style.left = (l + ((dataX - 450) / 350) * plotW) + 'px';
                         let yPos = yInterp;
                         if (yPos > 65000) yPos = 65000;
                         if (yPos < 0) yPos = 0;
