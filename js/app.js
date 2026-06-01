@@ -1045,17 +1045,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ============================================================
-   GRÁFICA DE FLUORESCENCIA (Cera Roja)
+   GRÁFICA DE FLUORESCENCIA (Cera Roja y Nopal)
    ============================================================ */
 async function inicializarGraficaFluo() {
     const gd = document.getElementById('grafica-fluorescencia');
     const tooltip = document.getElementById('custom-tooltip-fluo');
     const lambdaSpan = document.getElementById('lambda-value-fluo');
     const reflSpan = document.getElementById('fluo-value');
+    
     if (!gd) return;
 
     try {
-        // Leemos del archivo csv exclusivo para cera roja
+        // --- 1. GRÁFICA CERA ROJA ---
         const resp = await fetch('css/data/fluorescencia.csv');
         const texto = await resp.text();
         const filas = texto.trim().split('\n').filter(l => l.trim() !== '');
@@ -1075,15 +1076,12 @@ async function inicializarGraficaFluo() {
         
         const layout = {
             title: '<b>Espectro de Fluorescencia (Cera Roja) - UPT</b>',
-            // Rango en X (300 a 700)
             xaxis: { title: 'Longitud de onda (nm)', gridcolor: '#e2e8f0', range: [300, 700] },
-            // Rango en Y (0 a 65000)
             yaxis: { title: 'Intensidad de Fluorescencia', gridcolor: '#e2e8f0', range: [0, 65000] },
             paper_bgcolor: '#fcfdfe', plot_bgcolor: '#ffffff', hovermode: false, showlegend: false, margin: { l: 60, r: 30, t: 80, b: 60 }
         };
 
         await Plotly.newPlot(gd, [trace, hoverTrace], layout, { responsive: true, displayModeBar: false });
-        graficaFluoCargada = true;
 
         function interpY(x) {
             if (x <= wavelength[0]) return reflectancia[0];
@@ -1099,8 +1097,6 @@ async function inicializarGraficaFluo() {
             const fl = gd._fullLayout;
             const l = fl.margin.l, t = fl.margin.t;
             const plotW = rect.width - (l + fl.margin.r), plotH = rect.height - (t + fl.margin.b);
-            
-            // Interpolación ajustada para el rango X de 300 a 700 (un ancho total de 400)
             const dataX = 300 + ((ev.clientX - rect.left - l) / plotW) * 400;
 
             if (dataX >= 300 && dataX <= 700) {
@@ -1109,25 +1105,92 @@ async function inicializarGraficaFluo() {
                 if (lambdaSpan) lambdaSpan.textContent = dataX.toFixed(2);
                 if (reflSpan) reflSpan.textContent = yInterp.toFixed(2);
                 if (tooltip) {
-                    // Seguimiento horizontal (300 a 700)
                     tooltip.style.left = (l + ((dataX - 300) / 400) * plotW) + 'px';
-                    
-                    // Aseguramos que la etiqueta no salga flotando si un pico rebasa 65000
                     let yPos = yInterp;
                     if (yPos > 65000) yPos = 65000;
                     if (yPos < 0) yPos = 0;
-
-                    // Seguimiento vertical (0 a 65000)
                     tooltip.style.top = (t + (1 - (yPos / 65000)) * plotH - 25) + 'px';
                     tooltip.style.display = 'block';
                 }
             }
         });
         
-        // Ocultar tooltip al salir de la gráfica
         gd.addEventListener('mouseleave', () => {
             if(tooltip) tooltip.style.display = 'none';
         });
+
+        // --- 2. GRÁFICA NOPAL ---
+        const gdNopal = document.getElementById('grafica-fluorescencia-nopal');
+        const tooltipNopal = document.getElementById('custom-tooltip-fluo-nopal');
+        const lambdaSpanNopal = document.getElementById('lambda-value-fluo-nopal');
+        const reflSpanNopal = document.getElementById('fluo-value-nopal');
+
+        if (gdNopal) {
+            const respN = await fetch('css/data/NPC3listo.csv');
+            const textoN = await respN.text();
+            const filasN = textoN.trim().split('\n').filter(l => l.trim() !== '');
+            const wavelengthN = [], reflectanciaN = [];
+
+            filasN.slice(1).forEach(l => {
+                const cols = l.split(/,|\t|;/).map(s => s.trim());
+                const w = parseFloat(cols[0]), r = parseFloat(cols[1]);
+                if (!isNaN(w) && !isNaN(r)) {
+                    wavelengthN.push(w);
+                    reflectanciaN.push(r);
+                }
+            });
+
+            const traceN = { x: wavelengthN, y: reflectanciaN, mode: 'lines', line: { color: '#3282b8', width: 2.5, shape: 'spline' }, hoverinfo: 'none' };
+            const hoverTraceN = { x: [0], y: [0], mode: 'markers', marker: { size: 12, color: '#006847', line: { width: 3, color: '#ffffff' } }, hoverinfo: 'none' };
+            
+            const layoutN = {
+                title: '<b>Espectro de Fluorescencia (Nopal) - UPT</b>',
+                xaxis: { title: 'Longitud de onda (nm)', gridcolor: '#e2e8f0', range: [300, 700] },
+                yaxis: { title: 'Intensidad de Fluorescencia', gridcolor: '#e2e8f0', range: [0, 65000] },
+                paper_bgcolor: '#fcfdfe', plot_bgcolor: '#ffffff', hovermode: false, showlegend: false, margin: { l: 60, r: 30, t: 80, b: 60 }
+            };
+
+            await Plotly.newPlot(gdNopal, [traceN, hoverTraceN], layoutN, { responsive: true, displayModeBar: false });
+
+            function interpYN(x) {
+                if (x <= wavelengthN[0]) return reflectanciaN[0];
+                if (x >= wavelengthN[wavelengthN.length - 1]) return reflectanciaN[reflectanciaN.length - 1];
+                let i = 1;
+                while (i < wavelengthN.length && x > wavelengthN[i]) i++;
+                const x1 = wavelengthN[i - 1], x2 = wavelengthN[i], y1 = reflectanciaN[i - 1], y2 = reflectanciaN[i];
+                return y1 + ((x - x1) / (x2 - x1)) * (y2 - y1);
+            }
+
+            gdNopal.addEventListener('mousemove', (ev) => {
+                const rect = gdNopal.getBoundingClientRect();
+                const fl = gdNopal._fullLayout;
+                const l = fl.margin.l, t = fl.margin.t;
+                const plotW = rect.width - (l + fl.margin.r), plotH = rect.height - (t + fl.margin.b);
+                const dataX = 300 + ((ev.clientX - rect.left - l) / plotW) * 400;
+
+                if (dataX >= 300 && dataX <= 700) {
+                    const yInterp = interpYN(dataX);
+                    Plotly.restyle(gdNopal, { x: [[dataX]], y: [[yInterp]] }, [1]);
+                    if (lambdaSpanNopal) lambdaSpanNopal.textContent = dataX.toFixed(2);
+                    if (reflSpanNopal) reflSpanNopal.textContent = yInterp.toFixed(2);
+                    if (tooltipNopal) {
+                        tooltipNopal.style.left = (l + ((dataX - 300) / 400) * plotW) + 'px';
+                        let yPos = yInterp;
+                        if (yPos > 65000) yPos = 65000;
+                        if (yPos < 0) yPos = 0;
+                        tooltipNopal.style.top = (t + (1 - (yPos / 65000)) * plotH - 25) + 'px';
+                        tooltipNopal.style.display = 'block';
+                    }
+                }
+            });
+            
+            gdNopal.addEventListener('mouseleave', () => {
+                if(tooltipNopal) tooltipNopal.style.display = 'none';
+            });
+        }
+
+        graficaFluoCargada = true;
+
     } catch (e) {
         console.error('Error en motor de gráfica:', e);
     }
