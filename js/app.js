@@ -1119,35 +1119,31 @@ async function inicializarGraficaFluo() {
             if(tooltip) tooltip.style.display = 'none';
         });
 
-// --- 2. GRÁFICA NOPAL (CON LECTURA TIPO MATLAB) ---
+        // --- 2. GRÁFICA NOPAL (CON LECTURA TIPO MATLAB) ---
         const gdNopal = document.getElementById('grafica-fluorescencia-nopal');
         const tooltipNopal = document.getElementById('custom-tooltip-fluo-nopal');
         const lambdaSpanNopal = document.getElementById('lambda-value-fluo-nopal');
         const reflSpanNopal = document.getElementById('fluo-value-nopal');
 
         if (gdNopal) {
-            // 1. Apuntamos directamente al archivo .txt original
             const respN = await fetch('css/data/NPG3.txt'); 
             const textoN = await respN.text();
             const filasN = textoN.trim().split('\n');
             const wavelengthN = [], reflectanciaN = [];
 
             let headerFound = false;
-            let waveIdx = 1; // Índice por defecto para Wavelength (Columna 2)
-            let rawIdx = 2;  // Índice por defecto para Raw Data (Columna 3)
+            let waveIdx = 1; 
+            let rawIdx = 2;  
 
-            // 2. Procesamiento de líneas al igual que en MATLAB
             filasN.forEach(linea => {
                 const line = linea.trim();
                 if (!line) return;
 
-                // Ignorar metadatos hasta encontrar la cabecera
                 if (!headerFound) {
                     if (line.toLowerCase().startsWith('pixel;wavelength')) {
                         headerFound = true;
                         const headers = line.split(';');
                         
-                        // Localización dinámica de las columnas
                         const foundWave = headers.findIndex(h => h.toLowerCase().includes('wavelength'));
                         if (foundWave !== -1) waveIdx = foundWave;
                         
@@ -1157,17 +1153,14 @@ async function inicializarGraficaFluo() {
                     return;
                 }
 
-                // 3. Extracción de datos y conversión de texto a número
                 const cols = line.split(';');
                 if (cols.length > Math.max(waveIdx, rawIdx)) {
-                    // Reemplazo de comas por puntos para evitar NaN
                     const wStr = cols[waveIdx].replace(',', '.');
                     const rStr = cols[rawIdx].replace(',', '.');
                     
                     const w = parseFloat(wStr);
                     const r = parseFloat(rStr);
 
-                    // Limpieza de valores nulos o vacíos
                     if (!isNaN(w) && !isNaN(r)) {
                         wavelengthN.push(w);
                         reflectanciaN.push(r);
@@ -1175,7 +1168,6 @@ async function inicializarGraficaFluo() {
                 }
             });
 
-            // Color de línea ajustado al verde brillante de tu script de MATLAB
             const traceN = { x: wavelengthN, y: reflectanciaN, mode: 'lines', line: { color: '#1aff1a', width: 2.5, shape: 'spline' }, hoverinfo: 'none' };
             const hoverTraceN = { x: [0], y: [0], mode: 'markers', marker: { size: 12, color: '#006847', line: { width: 3, color: '#ffffff' } }, hoverinfo: 'none' };
             
@@ -1225,3 +1217,11 @@ async function inicializarGraficaFluo() {
                 if(tooltipNopal) tooltipNopal.style.display = 'none';
             });
         }
+        
+        // ESTAS LÍNEAS FALTABAN:
+        graficaFluoCargada = true;
+
+    } catch (e) {
+        console.error('Error en motor de gráfica:', e);
+    }
+}
