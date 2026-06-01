@@ -1126,7 +1126,7 @@ async function inicializarGraficaFluo() {
         const reflSpanNopal = document.getElementById('fluo-value-nopal');
 
         if (gdNopal) {
-            const respN = await fetch('css/data/NPG3.txt'); 
+            const respN = await fetch('css/data/NPC3.txt'); 
             const textoN = await respN.text();
             const filasN = textoN.trim().split('\n');
             const wavelengthN = [], reflectanciaN = [];
