@@ -1126,7 +1126,7 @@ async function inicializarGraficaFluo() {
         const reflSpanNopal = document.getElementById('fluo-value-nopal');
 
         if (gdNopal) {
-            const respN = await fetch('css/data/NPC3listo.csv');
+            const respN = await fetch('css/data/NPG3.csv');
             const textoN = await respN.text();
             const filasN = textoN.trim().split('\n').filter(l => l.trim() !== '');
             const wavelengthN = [], reflectanciaN = [];
@@ -1145,7 +1145,7 @@ async function inicializarGraficaFluo() {
             
             const layoutN = {
                 title: '<b>Espectro de Fluorescencia (Nopal) - UPT</b>',
-                xaxis: { title: 'Longitud de onda (nm)', gridcolor: '#e2e8f0', range: [450, 800] },
+                xaxis: { title: 'Longitud de onda (nm)', gridcolor: '#e2e8f0', range: [300, 700] },
                 yaxis: { title: 'Intensidad de Fluorescencia', gridcolor: '#e2e8f0', range: [0, 65000] },
                 paper_bgcolor: '#fcfdfe', plot_bgcolor: '#ffffff', hovermode: false, showlegend: false, margin: { l: 60, r: 30, t: 80, b: 60 }
             };
@@ -1168,7 +1168,7 @@ async function inicializarGraficaFluo() {
                 const plotW = rect.width - (l + fl.margin.r), plotH = rect.height - (t + fl.margin.b);
                 const dataX = 300 + ((ev.clientX - rect.left - l) / plotW) * 400;
 
-                if (dataX >= 450 && dataX <= 800) {
+                if (dataX >= 300 && dataX <= 700) {
                     const yInterp = interpYN(dataX);
                     Plotly.restyle(gdNopal, { x: [[dataX]], y: [[yInterp]] }, [1]);
                     if (lambdaSpanNopal) lambdaSpanNopal.textContent = dataX.toFixed(2);
