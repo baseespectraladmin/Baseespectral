@@ -1,0 +1,61 @@
+3226006 | 2026-06-01 | baseespectraladmin | Prueba NPC3
+ab14d76 | 2026-06-01 | baseespectraladmin | Hotfix nueva logica
+2d642b8 | 2026-06-01 | baseespectraladmin | Nueva logica grafica nopal
+a79929b | 2026-06-01 | baseespectraladmin | Correcion grafica nopal
+5c665e4 | 2026-06-01 | baseespectraladmin | Grafica actualizacion
+099c833 | 2026-06-01 | baseespectraladmin | Ajustes grafica nopal
+a2b48a4 | 2026-06-01 | baseespectraladmin | Agregado de graficas
+3f89028 | 2026-05-24 | baseespectraladmin | Centrado de grafica
+457e919 | 2026-05-24 | baseespectraladmin | Arreglo zoom
+b56cf42 | 2026-05-24 | baseespectraladmin | Intento grafica fluo 1
+33251d2 | 2026-05-24 | baseespectraladmin | Sincronizacion inteligente
+9028a3e | 2026-05-24 | baseespectraladmin | Arreglo
+511c2b9 | 2026-05-24 | baseespectraladmin | Graficas Fluorescencia
+5d3e069 | 2026-03-20 | baseespectraladmin | Merge pull request #4
+4b66c26 | 2026-03-20 | baseespectraladmin | Merge pull request #3 from baseespectraladmin/codex/add-related-articles-functionality-d7tqok
+2abb74e | 2026-03-20 | baseespectraladmin | Merge branch 'main' into codex/add-related-articles-functionality-d7tqok
+b2ad68f | 2026-03-20 | baseespectraladmin | Sanitize Supabase PDF upload keys
+feb4f0a | 2026-03-20 | baseespectraladmin | Merge pull request #2 from baseespectraladmin/codex/add-related-articles-functionality-oq04un
+1c88d89 | 2026-03-20 | baseespectraladmin | Merge branch 'main' into codex/add-related-articles-functionality-oq04un
+0c9a52d | 2026-03-20 | baseespectraladmin | Fix related article parent selection
+4e5316b | 2026-03-20 | baseespectraladmin | Merge pull request #1 from baseespectraladmin/codex/add-related-articles-functionality
+a990961 | 2026-03-20 | baseespectraladmin | Add related article series management
+29a2cbf | 2026-03-16 | baseespectraladmin | Parche nube 1
+c7629e2 | 2026-03-14 | baseespectraladmin | Hotfix formulario
+27d7934 | 2026-03-14 | baseespectraladmin | hotfix contraseñas
+ed4adf8 | 2026-03-14 | baseespectraladmin | hotfix 1
+9ab6f00 | 2026-03-14 | baseespectraladmin | ❌
+b75e06a | 2026-03-14 | baseespectraladmin | Agregado de edicion de menus
+78a44d9 | 2026-03-14 | baseespectraladmin | Cambios administrador 1
+25bab1a | 2026-02-20 | baseespectraladmin | hotfix
+5bb4a89 | 2026-02-20 | baseespectraladmin | Hero cambio
+76b3082 | 2026-02-20 | baseespectraladmin | Hotfix articulos
+70e33ed | 2026-02-20 | baseespectraladmin | hotfix publicacion 2
+b47cad7 | 2026-02-20 | baseespectraladmin | hotfix publicacion
+e7094e5 | 2026-02-20 | baseespectraladmin | buscando titulos1
+deec081 | 2026-02-20 | baseespectraladmin | name
+faedcba | 2026-02-20 | baseespectraladmin | Comentado json
+8d9f2c3 | 2026-02-20 | baseespectraladmin | Bruh hermano
+3dfd0d7 | 2026-02-20 | baseespectraladmin | rollback hotfix
+8db94b3 | 2026-02-20 | baseespectraladmin | Arreglo rollback
+51943ab | 2026-02-20 | baseespectraladmin | rollback
+39ca483 | 2026-02-20 | baseespectraladmin | rollback 1
+8958641 | 2026-02-20 | baseespectraladmin | Cambios para anios en difusion
+95caeb0 | 2026-02-20 | baseespectraladmin | Agregado subir links
+e6dbd82 | 2026-02-20 | baseespectraladmin | Hotfix ref agricola titulos menu
+8621eed | 2026-02-20 | baseespectraladmin | hotfix Reflexion difusa menu
+a5bf5ca | 2026-02-20 | baseespectraladmin | Hotfix titulos reflexion difusa
+a6c4b87 | 2026-02-15 | baseespectraladmin | Boton Editar
+4bd168e | 2026-02-14 | baseespectraladmin | Hotfix boton borrar
+8c9ff37 | 2026-02-14 | baseespectraladmin | hotfix formulario vista
+5363d6e | 2026-02-14 | baseespectraladmin | Hotfix 2 menu
+b8f1005 | 2026-02-14 | baseespectraladmin | Hotfix ccs menu
+da94aaa | 2026-02-14 | baseespectraladmin | Accesibilidad telefonos, separadores y cambio de nombre a Base espectral
+b25abf5 | 2026-02-14 | baseespectraladmin | Responsividad telefonos etc
+5ef8178 | 2026-02-14 | baseespectraladmin | Mensaje al subir archivos con caracteres imposibles y ascendencia del mas viejo al mas nuevo
+aea6738 | 2026-02-14 | baseespectraladmin | Los articulos se acomodan por años efectivamente
+6f51944 | 2026-02-14 | baseespectraladmin | Index Actualizado
+9abbcb7 | 2026-02-14 | baseespectraladmin | Cambios js
+ed24982 | 2026-02-14 | baseespectraladmin | Corregido json
+9d0180a | 2026-02-14 | baseespectraladmin | EspectroEdu: Integración total con Supabase y Plotly
+70f15bf | 2026-02-10 | baseespectraladmin | Primer commit: Primer intento base espectral

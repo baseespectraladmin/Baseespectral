@@ -495,3 +495,59 @@ input:focus {
         flex-direction: column;
     }
 }
+
+/* =========================================
+   GALERÍA DE FOTOS (MEDICIONES)
+   ========================================= */
+.galeria-mediciones {
+    margin-top: 25px;
+    margin-bottom: 40px;
+    background: #f8fbff;
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid #d9e8f5;
+}
+
+.galeria-mediciones h3 {
+    color: var(--azul-oscuro);
+    margin-bottom: 15px;
+    font-size: 1.15rem;
+    border-bottom: 2px solid var(--azul-claro);
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+.galeria-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+}
+
+.galeria-item {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    border: 1px solid #e1e8ed;
+    transition: transform 0.2s;
+}
+
+.galeria-item:hover {
+    transform: translateY(-5px);
+}
+
+.galeria-item img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    display: block;
+}
+
+.galeria-item p {
+    padding: 10px;
+    font-size: 0.85rem;
+    color: var(--texto);
+    text-align: center;
+    margin: 0;
+    line-height: 1.3;
+}

@@ -180,8 +180,16 @@ async function guardarConfiguracionMenu() {
    ============================================================ */
 
 function mostrarSeccion(id) {
-    // MODIFICACIÓN APLICADA: Si es administrador, pasa directamente.
-    if (!adminLogueado && contrasenasSecciones[id] && contrasenasSecciones[id].activa) {
+    // Protección obligatoria para la sección de fluorescencia
+    if (!adminLogueado && id === 'espectros-fluorescencia') {
+        const pass = prompt('El área de mediciones de fluorescencia requiere contraseña:');
+        if (pass !== 'missas') {
+            alert('Acceso denegado: Contraseña incorrecta.');
+            return;
+        }
+    } 
+    // Protección dinámica desde la nube para el resto de las secciones
+    else if (!adminLogueado && contrasenasSecciones[id] && contrasenasSecciones[id].activa) {
         const pass = prompt('Esta sección requiere contraseña para acceder:');
         if (pass !== contrasenasSecciones[id].password) {
             alert('Acceso denegado: Contraseña incorrecta.');
